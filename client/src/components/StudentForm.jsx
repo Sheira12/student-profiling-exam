@@ -6,21 +6,31 @@ const EMPTY_FORM = {
   course: '', year_level: '', gpa: '',
   enrollment_status: 'enrolled',
   academic_awards: '', skills: '', non_academic_activities: '',
-  violations: '', affiliations: ''
+  affiliations: ''
 }
 
-// Convert array fields to/from comma-separated strings
-const ARRAY_FIELDS = ['academic_awards', 'skills', 'non_academic_activities', 'violations', 'affiliations']
+const ARRAY_FIELDS = ['academic_awards', 'skills', 'non_academic_activities', 'affiliations']
+
+// Parse violations array into structured suspensions: [{reason, days}]
+function parseSuspensions(violations) {
+  if (!Array.isArray(violations) || !violations.length) return []
+  return violations.map(v => {
+    const match = v.match(/^(.+)\s*\((\d+)\s*days?\)$/i)
+    return match ? { reason: match[1].trim(), days: match[2] } : { reason: v, days: '' }
+  })
+}
 
 export function formToPayload(form) {
   const payload = { ...form }
   ARRAY_FIELDS.forEach(f => {
     payload[f] = form[f] ? form[f].split(',').map(s => s.trim()).filter(Boolean) : []
   })
-  if (payload.year_level) payload.year_level = parseInt(payload.year_level)
-  if (payload.gpa) payload.gpa = parseFloat(payload.gpa)
-  // enrollment_status is UI-only — if not enrolled, clear year_level
+  payload.year_level = payload.year_level ? parseInt(payload.year_level) : null
+  payload.gpa = payload.gpa !== '' && payload.gpa !== undefined ? parseFloat(payload.gpa) : null
   if (payload.enrollment_status === 'not_enrolled') payload.year_level = null
+  ;['email', 'phone', 'address', 'date_of_birth', 'gender', 'course'].forEach(f => {
+    if (payload[f] === '') payload[f] = null
+  })
   delete payload.enrollment_status
   return payload
 }
@@ -30,7 +40,6 @@ export function payloadToForm(student) {
   ARRAY_FIELDS.forEach(f => {
     form[f] = Array.isArray(student[f]) ? student[f].join(', ') : ''
   })
-  // derive enrollment_status from year_level if not set
   if (!form.enrollment_status) {
     form.enrollment_status = student.year_level ? 'enrolled' : 'not_enrolled'
   }
@@ -39,12 +48,22 @@ export function payloadToForm(student) {
 
 export default function StudentForm({ initialData, onSubmit, loading }) {
   const [form, setForm] = useState(initialData || EMPTY_FORM)
+  const [suspensions, setSuspensions] = useState(() => parseSuspensions(initialData?.violations))
 
   const handle = (e) => setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
 
+  const addSuspension = () => setSuspensions(s => [...s, { reason: '', days: '' }])
+  const removeSuspension = (i) => setSuspensions(s => s.filter((_, idx) => idx !== i))
+  const updateSuspension = (i, field, val) =>
+    setSuspensions(s => s.map((item, idx) => idx === i ? { ...item, [field]: val } : item))
+
   const submit = (e) => {
     e.preventDefault()
-    onSubmit(formToPayload(form))
+    const payload = formToPayload(form)
+    payload.violations = suspensions
+      .filter(s => s.reason.trim())
+      .map(s => s.days ? `${s.reason.trim()} (${s.days} days)` : s.reason.trim())
+    onSubmit(payload)
   }
 
   return (
@@ -94,8 +113,6 @@ export default function StudentForm({ initialData, onSubmit, loading }) {
 
       <fieldset>
         <legend>Academic History</legend>
-
-        {/* Enrollment Status Toggle */}
         <div className="enrollment-toggle-wrap">
           <span className="enrollment-label">Enrollment Status</span>
           <div className="enrollment-toggle">
@@ -103,19 +120,14 @@ export default function StudentForm({ initialData, onSubmit, loading }) {
               type="button"
               className={`enroll-btn ${form.enrollment_status === 'enrolled' ? 'active-enrolled' : ''}`}
               onClick={() => setForm(p => ({ ...p, enrollment_status: 'enrolled' }))}
-            >
-              ✓ Enrolled
-            </button>
+            >✓ Enrolled</button>
             <button
               type="button"
               className={`enroll-btn ${form.enrollment_status === 'not_enrolled' ? 'active-not-enrolled' : ''}`}
               onClick={() => setForm(p => ({ ...p, enrollment_status: 'not_enrolled' }))}
-            >
-              ✕ Not Enrolled
-            </button>
+            >✕ Not Enrolled</button>
           </div>
         </div>
-
         <div className="form-grid">
           <div className="form-group">
             <label>Course / Program</label>
@@ -161,10 +173,28 @@ export default function StudentForm({ initialData, onSubmit, loading }) {
       </fieldset>
 
       <fieldset>
-        <legend>Violations</legend>
-        <div className="form-group">
-          <label>Violations <small>(comma-separated)</small></label>
-          <input name="violations" value={form.violations} onChange={handle} placeholder="Late submission, Absences" />
+        <legend>Suspension</legend>
+        <div className="suspension-list">
+          {suspensions.map((s, i) => (
+            <div key={i} className="suspension-row">
+              <input
+                className="suspension-input"
+                placeholder="Reason (e.g. Cheating)"
+                value={s.reason}
+                onChange={e => updateSuspension(i, 'reason', e.target.value)}
+              />
+              <input
+                className="suspension-input suspension-days"
+                type="number"
+                min="1"
+                placeholder="Days"
+                value={s.days}
+                onChange={e => updateSuspension(i, 'days', e.target.value)}
+              />
+              <button type="button" className="suspension-remove" onClick={() => removeSuspension(i)}>✕</button>
+            </div>
+          ))}
+          <button type="button" className="suspension-add" onClick={addSuspension}>+ Add Suspension</button>
         </div>
       </fieldset>
 

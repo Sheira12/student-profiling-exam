@@ -5,17 +5,19 @@ const { createClient } = require("@supabase/supabase-js");
 
 const app = express();
 
-app.use(cors({
-  origin: "*",  // update to your Vercel URL after deploy e.g. "https://your-app.vercel.app"
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type"]
-}));
+app.use(
+  cors({
+    origin: "https://student-profiling-exam.vercel.app/", // update to your Vercel URL after deploy e.g. "https://your-app.vercel.app"
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type"],
+  }),
+);
 
 app.use(express.json());
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
+  process.env.SUPABASE_ANON_KEY,
 );
 
 // GET all students (with optional filters)
@@ -30,11 +32,13 @@ app.get("/api/students", async (req, res) => {
     if (affiliation) query = query.contains("affiliations", [affiliation]);
     if (search) {
       query = query.or(
-        `first_name.ilike.%${search}%,last_name.ilike.%${search}%,student_id.ilike.%${search}%`
+        `first_name.ilike.%${search}%,last_name.ilike.%${search}%,student_id.ilike.%${search}%`,
       );
     }
 
-    const { data, error } = await query.order("created_at", { ascending: false });
+    const { data, error } = await query.order("created_at", {
+      ascending: false,
+    });
     if (error) {
       console.error("Supabase error:", error);
       return res.status(500).json({ error: error.message, details: error });
@@ -109,5 +113,12 @@ app.delete("/api/students/:id", async (req, res) => {
 module.exports = app;
 
 if (require.main === module) {
-  app.listen(3001, () => console.log("API running on http://localhost:3001"));
+  const PORT = process.env.PORT || 3001
+  app.listen(PORT, () => console.log(`API running on http://localhost:${PORT}`))
+    .on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.error(`Port ${PORT} is in use. Kill the process or set a different PORT in .env`)
+        process.exit(1)
+      }
+    })
 }

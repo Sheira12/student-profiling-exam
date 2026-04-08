@@ -145,6 +145,13 @@ export default function Login({ onLogin }) {
               </button>
             </form>
 
+            <div className="lp-switch-role">
+              <span>Are you a student?</span>
+              <button type="button" className="lp-switch-btn" onClick={() => window.dispatchEvent(new CustomEvent('switchToStudent'))}>
+                Student Login →
+              </button>
+            </div>
+
             <p className="lp-footer">CCS Student Profiling System &copy; {new Date().getFullYear()}</p>
           </div>
         </div>

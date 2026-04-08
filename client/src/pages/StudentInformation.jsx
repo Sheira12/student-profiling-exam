@@ -1,14 +1,16 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { getStudents, deleteStudent } from '../api/students'
-import { Search, X, LayoutGrid, List, AlignJustify, Download, UserPlus, Eye, Pencil, Trash2, GraduationCap, UserCheck, UserX } from 'lucide-react'
+import { LayoutGrid, List, AlignJustify, Download, UserPlus, Eye, Pencil, Trash2, GraduationCap, UserCheck, UserX } from 'lucide-react'
+import SearchBar from '../components/SearchBar'
 
 const COURSES = ['All Courses', 'Information Technology', 'Computer Science', 'Information Systems']
 const AFFILIATIONS = ['All Affiliations', 'Student Council', 'ROTC', 'IEEE', 'Sports Club']
 const YEARS = ['All Years', '1st Year', '2nd Year', '3rd Year', '4th Year']
 const SKILLS = ['All Skills', 'Programming', 'Basketball', 'Leadership', 'Volleyball', 'Design']
 
-export default function StudentInformation() {
+// ── Part 5: Parent passes search value + handler down (one-way data flow)
+export default function StudentInformation({ role = 'admin' }) {
   const [allStudents, setAllStudents] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -123,12 +125,16 @@ export default function StudentInformation() {
           <p>Manage student profiles, academic records, and personal histories.</p>
         </div>
         <div className="si-header-actions">
-          <button className="btn-export" onClick={handleExport} title="Export to CSV">
-            <Download size={14} strokeWidth={2} /> Export
-          </button>
-          <button className="btn-add-student" onClick={() => navigate('/add')}>
-            <UserPlus size={15} strokeWidth={2} /> Add Student
-          </button>
+          {role === 'admin' && (
+            <button className="btn-export" onClick={handleExport} title="Export to CSV">
+              <Download size={14} strokeWidth={2} /> Export
+            </button>
+          )}
+          {role === 'admin' && (
+            <button className="btn-add-student" onClick={() => navigate('/add')}>
+              <UserPlus size={15} strokeWidth={2} /> Add Student
+            </button>
+          )}
         </div>
       </div>
 
@@ -151,22 +157,15 @@ export default function StudentInformation() {
             </div>
           </div>
 
-          {/* Search + Status Filter */}
+          {/* Search + Status Filter — Part 5: controlled input via SearchBar component */}
           <div className="list-search-row">
-            <div className="list-search">
-              <Search size={14} strokeWidth={2} className="list-search-icon" />
-              <input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search name or student number..."
-                onKeyDown={e => e.key === 'Escape' && setSearch('')}
-              />
-              {search && (
-                <button className="clear-search" onClick={() => { setSearch(''); navigate('/students') }} title="Clear search">
-                  <X size={12} strokeWidth={2.5} />
-                </button>
-              )}
-            </div>
+            {/* SearchBar receives value from parent state (one-way data flow) */}
+            <SearchBar
+              value={search}
+              onChange={val => setSearch(val)}
+              onClear={() => { setSearch(''); navigate('/students') }}
+              placeholder="Search name or student number..."
+            />
             <div className="status-filters">
               <button className={`status-btn ${statusFilter === 'all' ? 'active' : ''}`} onClick={() => setStatusFilter('all')}>All</button>
               <button className={`status-btn ${statusFilter === 'enrolled' ? 'active' : ''}`} onClick={() => setStatusFilter('enrolled')}>Enrolled</button>
@@ -227,8 +226,8 @@ export default function StudentInformation() {
                         }
                         <div className="row-actions">
                           <Link to={`/students/${s.id}`} className="row-btn view"><Eye size={12} strokeWidth={2}/> View</Link>
-                          <Link to={`/edit/${s.id}`} className="row-btn edit"><Pencil size={12} strokeWidth={2}/> Edit</Link>
-                          <button className="row-btn delete" onClick={() => handleDelete(s.id)}><Trash2 size={12} strokeWidth={2}/> Delete</button>
+                          {role === 'admin' && <Link to={`/edit/${s.id}`} className="row-btn edit"><Pencil size={12} strokeWidth={2}/> Edit</Link>}
+                          {role === 'admin' && <button className="row-btn delete" onClick={() => handleDelete(s.id)}><Trash2 size={12} strokeWidth={2}/> Delete</button>}
                         </div>
                       </div>
                     </div>
@@ -270,8 +269,8 @@ export default function StudentInformation() {
                           <td>
                             <div className="row-actions">
                               <Link to={`/students/${s.id}`} className="row-btn view"><Eye size={12} strokeWidth={2}/> View</Link>
-                              <Link to={`/edit/${s.id}`} className="row-btn edit"><Pencil size={12} strokeWidth={2}/> Edit</Link>
-                              <button className="row-btn delete" onClick={() => handleDelete(s.id)}><Trash2 size={12} strokeWidth={2}/> Delete</button>
+                              {role === 'admin' && <Link to={`/edit/${s.id}`} className="row-btn edit"><Pencil size={12} strokeWidth={2}/> Edit</Link>}
+                              {role === 'admin' && <button className="row-btn delete" onClick={() => handleDelete(s.id)}><Trash2 size={12} strokeWidth={2}/> Delete</button>}
                             </div>
                           </td>
                         </tr>

@@ -51,10 +51,20 @@ export default function AcademicProgress() {
 
   const handleSave = async () => {
     setSaving(true)
-    await updateStudent(id, { academic_progress: progress })
-    setSaving(false)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
+    try {
+      await updateStudent(id, { academic_progress: progress })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
+    } catch (e) {
+      const msg = e.response?.data?.error || e.message
+      if (msg.includes('academic_progress') || msg.includes('column')) {
+        alert('⚠️ Setup required: Run this SQL in your Supabase SQL Editor first:\n\nALTER TABLE students ADD COLUMN IF NOT EXISTS academic_progress jsonb DEFAULT \'{}\'::jsonb;')
+      } else {
+        alert('Failed to save: ' + msg)
+      }
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handlePrint = () => window.print()

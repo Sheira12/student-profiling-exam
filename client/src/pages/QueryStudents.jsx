@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { getStudents } from '../api/students'
 
 const PRESET_QUERIES = [
@@ -8,7 +8,7 @@ const PRESET_QUERIES = [
   { label: 'Has Leadership skill', params: { skill: 'Leadership' } },
   { label: 'Member of Student Council', params: { affiliation: 'Student Council' } },
   { label: 'Has Volleyball activity', params: { activity: 'Volleyball' } },
-  { label: 'Has Violations', params: { violation: 'Late submission' } },
+  { label: 'Has Suspension', params: { violation: 'Late submission' } },
 ]
 
 export default function QueryStudents() {
@@ -17,6 +17,16 @@ export default function QueryStudents() {
   const [activeQuery, setActiveQuery] = useState(null)
   const [custom, setCustom] = useState({ skill: '', activity: '', affiliation: '', violation: '' })
   const [searched, setSearched] = useState(false)
+  const location = useLocation()
+
+  // Auto-run query when navigated from dashboard with ?filter=violations
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const filter = params.get('filter')
+    if (filter === 'violations') {
+      runQuery({ violation: 'Late submission' }, 'Has Violations')
+    }
+  }, [location.search])
 
   const runQuery = async (params, label) => {
     setLoading(true)
@@ -44,7 +54,7 @@ export default function QueryStudents() {
     <div className="query-page">
       <div className="query-page-header">
         <h1>Query / Filter Students</h1>
-        <p>Search students by skill, activity, affiliation, or violation.</p>
+        <p>Search students by skill, activity, affiliation, or suspension.</p>
       </div>
 
       <div className="query-panel">
@@ -79,7 +89,7 @@ export default function QueryStudents() {
               <input value={custom.affiliation} onChange={e => setCustom(p => ({ ...p, affiliation: e.target.value }))} placeholder="e.g. ROTC" />
             </div>
             <div className="form-group">
-              <label>Violation</label>
+              <label>Suspension</label>
               <input value={custom.violation} onChange={e => setCustom(p => ({ ...p, violation: e.target.value }))} placeholder="e.g. Absences" />
             </div>
           </div>

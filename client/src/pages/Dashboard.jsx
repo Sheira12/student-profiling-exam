@@ -100,11 +100,11 @@ export default function Dashboard() {
           </div>
           <ArrowRight size={16} className="dsc-arrow" strokeWidth={2} />
         </div>
-        <div className="dash-stat-card yellow">
+        <div className="dash-stat-card yellow" onClick={() => navigate('/query?filter=violations')} style={{cursor:'pointer'}}>
           <div className="dsc-icon"><AlertTriangle size={28} strokeWidth={1.6} /></div>
           <div className="dsc-body">
             <div className="dsc-value">{loading ? '—' : stats.withViolations}</div>
-            <div className="dsc-label">With Violations</div>
+            <div className="dsc-label">With Suspension</div>
           </div>
           <ArrowRight size={16} className="dsc-arrow" strokeWidth={2} />
         </div>

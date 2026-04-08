@@ -86,9 +86,19 @@ export default function StudentProfile() {
         <Section title="Affiliations" items={student.affiliations} />
         {student.violations?.length > 0 && (
           <div className="profile-section violations">
-            <h3>Violations</h3>
-            <div className="tags">
-              {student.violations.map(v => <span key={v} className="tag violation">{v}</span>)}
+            <h3>⚠ Suspension Record</h3>
+            <div className="suspension-entries">
+              {student.violations.map((v, i) => {
+                const match = v.match(/^(.+)\s*\((\d+)\s*days?\)$/i)
+                const reason = match ? match[1].trim() : v
+                const days = match ? match[2] : null
+                return (
+                  <div key={i} className="suspension-entry">
+                    <span className="suspension-reason">{reason}</span>
+                    {days && <span className="suspension-badge">{days} day{days > 1 ? 's' : ''} suspended</span>}
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}
