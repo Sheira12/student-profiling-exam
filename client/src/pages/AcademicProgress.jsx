@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { getStudent, updateStudent } from '../api/students'
+import { getStudent, updateStudent } from '../api/supabase-students'
 import { CURRICULUM } from '../data/curriculum'
 import { Save, Printer, ArrowLeft, GraduationCap } from 'lucide-react'
 
@@ -19,12 +19,12 @@ function getStatus(grade) {
 
 function getStatusClass(status) {
   switch (status) {
-    case 'PASSED':   return 'apt-passed'
-    case 'FAILED':   return 'apt-failed'
-    case 'INC':      return 'apt-inc'
+    case 'PASSED': return 'apt-passed'
+    case 'FAILED': return 'apt-failed'
+    case 'INC': return 'apt-inc'
     case 'ENROLLED': return 'apt-enrolled'
-    case 'DROPPED':  return 'apt-dropped'
-    default:         return ''
+    case 'DROPPED': return 'apt-dropped'
+    default: return ''
   }
 }
 
@@ -56,7 +56,7 @@ export default function AcademicProgress() {
       setSaved(true)
       setTimeout(() => setSaved(false), 2500)
     } catch (e) {
-      const msg = e.response?.data?.error || e.message
+      const msg = e.message || e.error?.message || 'Unknown error'
       if (msg.includes('academic_progress') || msg.includes('column')) {
         alert('⚠️ Setup required: Run this SQL in your Supabase SQL Editor first:\n\nALTER TABLE students ADD COLUMN IF NOT EXISTS academic_progress jsonb DEFAULT \'{}\'::jsonb;')
       } else {
@@ -85,7 +85,7 @@ export default function AcademicProgress() {
     <div className="apt-page">
       {/* Header */}
       <div className="apt-topbar no-print">
-        <Link to={`/students/${id}`} className="apt-back">
+        <Link to={`/admin/students/${id}`} className="apt-back">
           <ArrowLeft size={16} strokeWidth={2} /> Back to Profile
         </Link>
         <div className="apt-topbar-actions">

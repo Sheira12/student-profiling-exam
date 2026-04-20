@@ -1,13 +1,18 @@
 import { NavLink } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import { LayoutDashboard, Users, Search, UserPlus, BookOpen, BarChart2 } from 'lucide-react'
+import { LayoutDashboard, Users, Search, UserPlus, BookOpen, BarChart2, Filter, Briefcase, ClipboardList, GraduationCap, Megaphone } from 'lucide-react'
 
 const NAV = [
-  { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard',        end: true },
-  { to: '/users',     icon: Users,           label: 'Users',            end: true },
-  { to: '/reports',   icon: BarChart2,       label: 'Reports',          end: true },
-  { to: '/add',       icon: UserPlus,        label: 'Add Student',      end: true },
-  { to: '/progress',  icon: BookOpen,        label: 'Academic Tracker', end: true },
+  { to: '/admin/dashboard',     icon: LayoutDashboard, label: 'Dashboard',          end: true },
+  { to: '/admin/students',      icon: Users,           label: 'Students',           end: true },
+  { to: '/admin/reports',       icon: BarChart2,       label: 'Reports',            end: true },
+  { to: '/admin/reports-query', icon: Filter,          label: 'Query & Filter',     end: true },
+  { to: '/admin/add',           icon: UserPlus,        label: 'Add Student',        end: true },
+  { to: '/admin/subjects',      icon: GraduationCap,   label: 'Subjects',           end: true },
+  { to: '/admin/advisers',      icon: Briefcase,       label: 'Advisers',           end: true },
+  { to: '/admin/progress',      icon: BookOpen,        label: 'Academic Tracker',   end: true },
+  { to: '/admin/announcements', icon: Megaphone,       label: 'Announcements',      end: true },
+  { to: '/admin/logs',          icon: ClipboardList,   label: 'Activity Logs',      end: true },
 ]
 
 export default function Sidebar({ mobileOpen, onClose }) {

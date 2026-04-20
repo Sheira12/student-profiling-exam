@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Bell, X, CheckCheck, Info, AlertTriangle, UserPlus, GraduationCap } from 'lucide-react'
-import { getStudents } from '../api/students'
+import { getStudents } from '../api/supabase-students'
 
 const ICON_MAP = {
   info:    <Info size={15} strokeWidth={2} />,

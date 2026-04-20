@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { getStudents } from '../api/students'
+import { getStudents } from '../api/supabase-students'
 import {
   GraduationCap, UserCheck, UserX, AlertTriangle,
   UserPlus, Users, Search, ClipboardList, ArrowRight,
-  TrendingUp, Award, Building2, Zap
+  TrendingUp, Award, Building2, Zap, Calendar, BarChart3
 } from 'lucide-react'
 
 export default function Dashboard() {
@@ -24,6 +24,8 @@ export default function Dashboard() {
     enrolled: students.filter(s => s.year_level).length,
     notEnrolled: students.filter(s => !s.year_level).length,
     withViolations: students.filter(s => s.violations?.length > 0).length,
+    highPerformers: students.filter(s => s.gpa >= 3.5).length,
+    withSkills: students.filter(s => s.skills?.length > 0).length,
   }
 
   // Top skills across all students
@@ -53,185 +55,307 @@ export default function Dashboard() {
   const greeting = now.getHours() < 12 ? 'Good morning' : now.getHours() < 18 ? 'Good afternoon' : 'Good evening'
 
   return (
-    <div className="dash-page">
-
-      {/* Welcome Banner */}
-      <div className="dash-banner">
-        <div className="dash-banner-left">
-          <div className="dash-banner-logo">
-            <img src="/logo.png" alt="CCS Logo" className="banner-logo-img" />
+    <div className="dashboard-page">
+      {/* Enhanced Welcome Banner */}
+      <div className="dashboard-header">
+        <div className="header-content">
+          <div className="header-left">
+            <div className="header-logo">
+              <img src="/logo.png" alt="CCS Logo" className="logo-image" />
+            </div>
+            <div className="header-text">
+              <h1 className="dashboard-title">
+                <BarChart3 className="title-icon" />
+                College of Computing Studies
+              </h1>
+              <p className="dashboard-subtitle">
+                {greeting}! Welcome to the Student Profiling System
+              </p>
+              <div className="dashboard-date">
+                <Calendar className="date-icon" />
+                {now.toLocaleDateString('en-PH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              </div>
+            </div>
           </div>
-          <div>
-            <h1 className="dash-title">College of Computing Studies</h1>
-            <p className="dash-subtitle">Pamantasan ng Cabuyao — Student Profiling System</p>
+          <div className="header-actions">
+            <button className="primary-action-btn" onClick={() => navigate('/add')}>
+              <UserPlus className="btn-icon" />
+              Add New Student
+            </button>
           </div>
-        </div>
-        <div className="dash-banner-right">
-          <div className="dash-date">
-            {now.toLocaleDateString('en-PH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-          </div>
-          <button className="btn-add-student" onClick={() => navigate('/add')}>+ Add Student</button>
         </div>
       </div>
 
-      {/* Stat Cards */}
-      <div className="dash-stats">
-        <div className="dash-stat-card orange" onClick={() => navigate('/students')}>
-          <div className="dsc-icon"><GraduationCap size={28} strokeWidth={1.6} /></div>
-          <div className="dsc-body">
-            <div className="dsc-value">{loading ? '—' : stats.total}</div>
-            <div className="dsc-label">Total Students</div>
+      {/* Enhanced Stat Cards */}
+      <div className="stats-grid">
+        <div className="stat-card total" onClick={() => navigate('/students')}>
+          <div className="stat-icon">
+            <GraduationCap className="icon" />
           </div>
-          <ArrowRight size={16} className="dsc-arrow" strokeWidth={2} />
+          <div className="stat-content">
+            <div className="stat-number">{loading ? '—' : stats.total}</div>
+            <div className="stat-label">Total Students</div>
+            <div className="stat-sublabel">All registered students</div>
+          </div>
+          <div className="stat-trend">
+            <ArrowRight className="trend-icon" />
+          </div>
         </div>
-        <div className="dash-stat-card green" onClick={() => navigate('/students')}>
-          <div className="dsc-icon"><UserCheck size={28} strokeWidth={1.6} /></div>
-          <div className="dsc-body">
-            <div className="dsc-value">{loading ? '—' : stats.enrolled}</div>
-            <div className="dsc-label">Enrolled</div>
+
+        <div className="stat-card enrolled" onClick={() => navigate('/students')}>
+          <div className="stat-icon">
+            <UserCheck className="icon" />
           </div>
-          <ArrowRight size={16} className="dsc-arrow" strokeWidth={2} />
+          <div className="stat-content">
+            <div className="stat-number">{loading ? '—' : stats.enrolled}</div>
+            <div className="stat-label">Enrolled</div>
+            <div className="stat-sublabel">Currently active students</div>
+          </div>
+          <div className="stat-trend">
+            <ArrowRight className="trend-icon" />
+          </div>
         </div>
-        <div className="dash-stat-card red" onClick={() => navigate('/students')}>
-          <div className="dsc-icon"><UserX size={28} strokeWidth={1.6} /></div>
-          <div className="dsc-body">
-            <div className="dsc-value">{loading ? '—' : stats.notEnrolled}</div>
-            <div className="dsc-label">Not Enrolled</div>
+
+        <div className="stat-card high-performers" onClick={() => navigate('/reports-query')}>
+          <div className="stat-icon">
+            <Award className="icon" />
           </div>
-          <ArrowRight size={16} className="dsc-arrow" strokeWidth={2} />
+          <div className="stat-content">
+            <div className="stat-number">{loading ? '—' : stats.highPerformers}</div>
+            <div className="stat-label">High Performers</div>
+            <div className="stat-sublabel">GPA 3.5 and above</div>
+          </div>
+          <div className="stat-trend">
+            <ArrowRight className="trend-icon" />
+          </div>
         </div>
-        <div className="dash-stat-card yellow" onClick={() => navigate('/query?filter=violations')} style={{cursor:'pointer'}}>
-          <div className="dsc-icon"><AlertTriangle size={28} strokeWidth={1.6} /></div>
-          <div className="dsc-body">
-            <div className="dsc-value">{loading ? '—' : stats.withViolations}</div>
-            <div className="dsc-label">With Suspension</div>
+
+        <div className="stat-card violations" onClick={() => navigate('/reports-query')}>
+          <div className="stat-icon">
+            <AlertTriangle className="icon" />
           </div>
-          <ArrowRight size={16} className="dsc-arrow" strokeWidth={2} />
+          <div className="stat-content">
+            <div className="stat-number">{loading ? '—' : stats.withViolations}</div>
+            <div className="stat-label">With Records</div>
+            <div className="stat-sublabel">Disciplinary actions</div>
+          </div>
+          <div className="stat-trend">
+            <ArrowRight className="trend-icon" />
+          </div>
         </div>
       </div>
 
-      <div className="dash-grid">
-
-        {/* Recent Students */}
-        <div className="dash-card span-2">
-          <div className="dash-card-header">
-            <h2><Users size={15} style={{display:'inline',marginRight:'6px',verticalAlign:'middle'}}/>Recent Students</h2>
-            <Link to="/students" className="dash-see-all">See all →</Link>
+      <div className="dashboard-grid">
+        {/* Enhanced Recent Students */}
+        <div className="dashboard-card recent-students">
+          <div className="card-header">
+            <div className="card-title">
+              <Users className="card-icon" />
+              <h2>Recent Students</h2>
+            </div>
+            <Link to="/students" className="card-action">View All</Link>
           </div>
-          {loading && <div className="si-loading"><span className="spinner" />Loading...</div>}
-          {!loading && recent.length === 0 && (
-            <div className="dash-empty">
-              <div>No students yet.</div>
-              <button className="btn-add-student" onClick={() => navigate('/add')}>+ Add your first student</button>
-            </div>
-          )}
-          {!loading && recent.map(s => (
-            <div key={s.id} className="dash-student-row">
-              <div className="row-avatar">{s.first_name?.[0]}{s.last_name?.[0]}</div>
-              <div className="row-info">
-                <div className="row-name">{s.first_name} {s.last_name}</div>
-                <div className="row-sub">{s.course || 'No course'}{s.year_level ? ` · Year ${s.year_level}` : ''}</div>
+          <div className="card-content">
+            {loading && (
+              <div className="loading-state">
+                <div className="loading-spinner"></div>
+                <span>Loading students...</span>
               </div>
-              <div className="dash-row-right">
-                {s.year_level
-                  ? <span className="status-badge enrolled">Enrolled</span>
-                  : <span className="status-badge not-enrolled">Not Enrolled</span>
-                }
-                <Link to={`/students/${s.id}`} className="row-btn view">View</Link>
+            )}
+            {!loading && recent.length === 0 && (
+              <div className="empty-state">
+                <Users className="empty-icon" />
+                <h3>No students yet</h3>
+                <p>Start by adding your first student to the system</p>
+                <button className="empty-action-btn" onClick={() => navigate('/add')}>
+                  <UserPlus className="btn-icon" />
+                  Add First Student
+                </button>
               </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Year Level Distribution */}
-        <div className="dash-card">
-          <div className="dash-card-header"><h2><TrendingUp size={15} style={{display:'inline',marginRight:'6px',verticalAlign:'middle'}}/>Year Level Distribution</h2></div>
-          <div className="year-bars">
-            {[1,2,3,4].map(yr => (
-              <div key={yr} className="year-bar-row">
-                <span className="year-bar-label">{yr}{['st','nd','rd','th'][yr-1]} Year</span>
-                <div className="year-bar-track">
-                  <div
-                    className="year-bar-fill"
-                    style={{ width: `${(yearDist[yr] / maxYear) * 100}%` }}
-                  />
+            )}
+            {!loading && recent.map(s => (
+              <div key={s.id} className="student-row">
+                <div className="student-avatar">
+                  {s.first_name?.[0]}{s.last_name?.[0]}
                 </div>
-                <span className="year-bar-count">{yearDist[yr]}</span>
+                <div className="student-info">
+                  <div className="student-name">{s.first_name} {s.last_name}</div>
+                  <div className="student-details">
+                    <span className="student-id">{s.student_id}</span>
+                    <span className="student-course">{s.course || 'No course'}</span>
+                    {s.year_level && <span className="student-year">Year {s.year_level}</span>}
+                  </div>
+                </div>
+                <div className="student-actions">
+                  <span className={`status-badge ${s.year_level ? 'enrolled' : 'not-enrolled'}`}>
+                    {s.year_level ? 'Enrolled' : 'Not Enrolled'}
+                  </span>
+                  <Link to={`/admin/students/${s.id}`} className="view-btn">
+                    <ArrowRight className="btn-icon" />
+                  </Link>
+                </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Top Skills */}
-        <div className="dash-card">
-          <div className="dash-card-header">
-            <h2><Award size={15} style={{display:'inline',marginRight:'6px',verticalAlign:'middle'}}/>Top Skills</h2>
-            <Link to="/query" className="dash-see-all">Query →</Link>
+        {/* Enhanced Year Level Distribution */}
+        <div className="dashboard-card year-distribution">
+          <div className="card-header">
+            <div className="card-title">
+              <TrendingUp className="card-icon" />
+              <h2>Year Level Distribution</h2>
+            </div>
           </div>
-          {topSkills.length === 0 && <div className="dash-empty-sm">No skills data yet.</div>}
-          <div className="skill-chips">
-            {topSkills.map(([skill, count]) => (
-              <div key={skill} className="skill-chip-row">
-                <span className="skill-chip">{skill}</span>
-                <span className="skill-chip-count">{count} student{count !== 1 ? 's' : ''}</span>
+          <div className="card-content">
+            <div className="year-chart">
+              {[1,2,3,4].map(yr => (
+                <div key={yr} className="year-bar">
+                  <div className="year-info">
+                    <span className="year-label">{yr}{['st','nd','rd','th'][yr-1]} Year</span>
+                    <span className="year-count">{yearDist[yr]}</span>
+                  </div>
+                  <div className="year-progress">
+                    <div
+                      className={`year-fill year-${yr}`}
+                      style={{ width: `${(yearDist[yr] / maxYear) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Enhanced Top Skills */}
+        <div className="dashboard-card top-skills">
+          <div className="card-header">
+            <div className="card-title">
+              <Award className="card-icon" />
+              <h2>Popular Skills</h2>
+            </div>
+            <Link to="/reports-query" className="card-action">Query Skills</Link>
+          </div>
+          <div className="card-content">
+            {topSkills.length === 0 ? (
+              <div className="empty-state-small">
+                <Award className="empty-icon" />
+                <p>No skills data available yet</p>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Course Distribution */}
-        <div className="dash-card">
-          <div className="dash-card-header"><h2><Building2 size={15} style={{display:'inline',marginRight:'6px',verticalAlign:'middle'}}/>By Course</h2></div>
-          {topCourses.length === 0 && <div className="dash-empty-sm">No course data yet.</div>}
-          <div className="course-list">
-            {topCourses.map(([course, count]) => (
-              <div key={course} className="course-row">
-                <div className="course-dot" />
-                <span className="course-name">{course}</span>
-                <span className="course-count">{count}</span>
+            ) : (
+              <div className="skills-list">
+                {topSkills.map(([skill, count]) => (
+                  <div key={skill} className="skill-item">
+                    <div className="skill-info">
+                      <span className="skill-name">{skill}</span>
+                      <span className="skill-count">{count} student{count !== 1 ? 's' : ''}</span>
+                    </div>
+                    <div className="skill-bar">
+                      <div 
+                        className="skill-fill" 
+                        style={{ width: `${(count / topSkills[0][1]) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         </div>
 
-        {/* Top Affiliations */}
-        <div className="dash-card">
-          <div className="dash-card-header"><h2><ClipboardList size={15} style={{display:'inline',marginRight:'6px',verticalAlign:'middle'}}/>Top Affiliations</h2></div>
-          {topAffiliations.length === 0 && <div className="dash-empty-sm">No affiliation data yet.</div>}
-          <div className="affil-list">
-            {topAffiliations.map(([aff, count], i) => (
-              <div key={aff} className="affil-row">
-                <span className="affil-rank">{i + 1}</span>
-                <span className="affil-name">{aff}</span>
-                <span className="affil-count">{count}</span>
+        {/* Enhanced Course Distribution */}
+        <div className="dashboard-card course-distribution">
+          <div className="card-header">
+            <div className="card-title">
+              <Building2 className="card-icon" />
+              <h2>Course Programs</h2>
+            </div>
+          </div>
+          <div className="card-content">
+            {topCourses.length === 0 ? (
+              <div className="empty-state-small">
+                <Building2 className="empty-icon" />
+                <p>No course data available yet</p>
               </div>
-            ))}
+            ) : (
+              <div className="courses-list">
+                {topCourses.map(([course, count], index) => (
+                  <div key={course} className="course-item">
+                    <div className={`course-indicator course-${index + 1}`} />
+                    <div className="course-info">
+                      <span className="course-name">{course}</span>
+                      <span className="course-count">{count} students</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="dash-card">
-          <div className="dash-card-header"><h2><Zap size={15} style={{display:'inline',marginRight:'6px',verticalAlign:'middle'}}/>Quick Actions</h2></div>
-          <div className="quick-actions">
-            <button className="qa-btn" onClick={() => navigate('/add')}>
-              <UserPlus size={22} strokeWidth={1.6} className="qa-icon-svg" />
-              <span>Add Student</span>
-            </button>
-            <button className="qa-btn" onClick={() => navigate('/students')}>
-              <Users size={22} strokeWidth={1.6} className="qa-icon-svg" />
-              <span>View All Students</span>
-            </button>
-            <button className="qa-btn" onClick={() => navigate('/query')}>
-              <Search size={22} strokeWidth={1.6} className="qa-icon-svg" />
-              <span>Query / Filter</span>
-            </button>
-            <button className="qa-btn" onClick={() => navigate('/students')}>
-              <ClipboardList size={22} strokeWidth={1.6} className="qa-icon-svg" />
-              <span>Personal Details</span>
-            </button>
+        {/* Enhanced Quick Actions */}
+        <div className="dashboard-card quick-actions">
+          <div className="card-header">
+            <div className="card-title">
+              <Zap className="card-icon" />
+              <h2>Quick Actions</h2>
+            </div>
+          </div>
+          <div className="card-content">
+            <div className="actions-grid">
+              <button className="action-btn primary" onClick={() => navigate('/add')}>
+                <UserPlus className="action-icon" />
+                <span className="action-label">Add Student</span>
+                <span className="action-desc">Register new student</span>
+              </button>
+              <button className="action-btn secondary" onClick={() => navigate('/students')}>
+                <Users className="action-icon" />
+                <span className="action-label">View Students</span>
+                <span className="action-desc">Browse all records</span>
+              </button>
+              <button className="action-btn tertiary" onClick={() => navigate('/reports-query')}>
+                <Search className="action-icon" />
+                <span className="action-label">Search & Filter</span>
+                <span className="action-desc">Find specific students</span>
+              </button>
+              <button className="action-btn quaternary" onClick={() => navigate('/reports')}>
+                <BarChart3 className="action-icon" />
+                <span className="action-label">View Reports</span>
+                <span className="action-desc">Analytics & insights</span>
+              </button>
+            </div>
           </div>
         </div>
 
+        {/* Enhanced Top Affiliations */}
+        <div className="dashboard-card top-affiliations">
+          <div className="card-header">
+            <div className="card-title">
+              <ClipboardList className="card-icon" />
+              <h2>Top Organizations</h2>
+            </div>
+          </div>
+          <div className="card-content">
+            {topAffiliations.length === 0 ? (
+              <div className="empty-state-small">
+                <ClipboardList className="empty-icon" />
+                <p>No organization data available yet</p>
+              </div>
+            ) : (
+              <div className="affiliations-list">
+                {topAffiliations.map(([aff, count], index) => (
+                  <div key={aff} className="affiliation-item">
+                    <div className="affiliation-rank">#{index + 1}</div>
+                    <div className="affiliation-info">
+                      <span className="affiliation-name">{aff}</span>
+                      <span className="affiliation-count">{count} members</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )

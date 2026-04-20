@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import StudentForm from '../components/StudentForm'
-import { createStudent } from '../api/students'
+import { createStudent } from '../api/supabase-students'
+import { UserPlus } from 'lucide-react'
 
 export default function AddStudent() {
   const navigate = useNavigate()
@@ -13,7 +14,7 @@ export default function AddStudent() {
     setError(null)
     try {
       const { data } = await createStudent(payload)
-      navigate(`/students/${data.id}`)
+      navigate(`/admin/students/${data.id}`)
     } catch (e) {
       const msg = e.response?.data?.error || e.message
       if (msg.includes('duplicate key') || msg.includes('unique constraint')) {
@@ -27,9 +28,14 @@ export default function AddStudent() {
 
   return (
     <div className="form-page">
-      <div className="form-page-header">
-        <h1>Add New Student</h1>
-        <p>Fill in the student's complete profile information.</p>
+      <div className="page-header-banner" style={{ marginBottom: '1.5rem' }}>
+        <div className="page-header-left">
+          <div className="page-header-icon"><UserPlus size={22} /></div>
+          <div>
+            <h1 className="page-header-title">Add New Student</h1>
+            <p className="page-header-sub">Fill in the student's complete profile information.</p>
+          </div>
+        </div>
       </div>
       {error && <div className="error-msg">{error}</div>}
       <StudentForm onSubmit={handleSubmit} loading={loading} />

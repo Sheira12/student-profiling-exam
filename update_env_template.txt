@@ -1,0 +1,7 @@
+Replace "your-anon-key-here" in both files with your actual key:
+
+In client/.env:
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... (your actual key)
+
+In api/.env:
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... (your actual key)

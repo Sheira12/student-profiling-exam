@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getStudents } from '../api/students'
+import { getStudents } from '../api/supabase-students'
 import { BookOpen, Search } from 'lucide-react'
 
 export default function AcademicTrackerPicker() {
@@ -21,11 +21,13 @@ export default function AcademicTrackerPicker() {
 
   return (
     <div className="atp-page">
-      <div className="atp-header">
-        <div className="atp-header-icon"><BookOpen size={22} strokeWidth={1.6} /></div>
-        <div>
-          <h1>Academic Progress Tracker</h1>
-          <p>Select a student to view or update their academic progress.</p>
+      <div className="page-header-banner">
+        <div className="page-header-left">
+          <div className="page-header-icon"><BookOpen size={22} /></div>
+          <div>
+            <h1 className="page-header-title">Academic Progress Tracker</h1>
+            <p className="page-header-sub">Select a student to view or update their academic progress.</p>
+          </div>
         </div>
       </div>
 
@@ -50,7 +52,7 @@ export default function AcademicTrackerPicker() {
           <div
             key={s.id}
             className="atp-card"
-            onClick={() => navigate(`/progress/${s.id}`)}
+            onClick={() => navigate(`/admin/progress/${s.id}`)}
           >
             <div className="atp-card-avatar">{s.first_name?.[0]}{s.last_name?.[0]}</div>
             <div className="atp-card-info">

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import StudentForm, { payloadToForm } from '../components/StudentForm'
-import { getStudent, updateStudent } from '../api/students'
+import { getStudent, updateStudent } from '../api/supabase-students'
 
 export default function EditStudent() {
   const { id } = useParams()

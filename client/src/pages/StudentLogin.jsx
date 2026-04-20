@@ -1,12 +1,16 @@
 import { useState, useRef } from 'react'
-import { GraduationCap, Hash, User, Eye, EyeOff, ArrowLeft } from 'lucide-react'
-import { getStudents } from '../api/students'
+import { useNavigate } from 'react-router-dom'
+import { GraduationCap, Hash, Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react'
+import { supabase } from '../lib/supabase'
+import { setStudent } from '../hooks/useAuth'
 
-export default function StudentLogin({ onStudentLogin, onBackToAdmin }) {
-  const [form, setForm] = useState({ student_id: '', last_name: '' })
+export default function StudentLogin() {
+  const [form, setForm] = useState({ student_id: '', password: '' })
+  const [showPass, setShowPass] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const cardRef = useRef(null)
+  const navigate = useNavigate()
 
   const handle = (e) => setForm(p => ({ ...p, [e.target.name]: e.target.value }))
 
@@ -15,18 +19,24 @@ export default function StudentLogin({ onStudentLogin, onBackToAdmin }) {
     setError('')
     setLoading(true)
     try {
-      const { data } = await getStudents({ search: form.student_id.trim() })
-      const match = data.find(s =>
-        s.student_id === form.student_id.trim() &&
-        s.last_name.toLowerCase() === form.last_name.trim().toLowerCase()
-      )
-      if (match) {
-        onStudentLogin(match)
+      const { data, error: dbError } = await supabase
+        .from('students')
+        .select('*')
+        .eq('student_id', form.student_id.trim())
+        .eq('password', form.password)
+        .maybeSingle()
+
+      if (dbError) throw dbError
+
+      if (data) {
+        setStudent(data)
+        navigate('/student/portal', { replace: true })
       } else {
-        setError('Student ID or Last Name is incorrect.')
+        setError('Invalid Student ID or password.')
       }
-    } catch {
-      setError('Connection error. Please try again.')
+    } catch (err) {
+      console.error('Student login error:', err)
+      setError('Connection error: ' + (err.message || 'Please try again.'))
     } finally {
       setLoading(false)
     }
@@ -65,16 +75,14 @@ export default function StudentLogin({ onStudentLogin, onBackToAdmin }) {
 
       <div className="lp-layout">
         <div className="lp-left">
-          <div className="lp-logo-ring">
-            <img src="/logo.png" alt="CCS Logo" className="lp-logo-img" />
-          </div>
+          <div className="lp-logo-ring"><img src="/logo.png" alt="CCS Logo" className="lp-logo-img" /></div>
           <h1 className="lp-school">College of Computing Studies</h1>
           <p className="lp-school-sub">Pamantasan ng Cabuyao</p>
           <div className="lp-tagline">Student Portal</div>
           <div className="sl-info-cards">
-            <div className="sl-info-card"><GraduationCap size={18}/><span>View your profile</span></div>
-            <div className="sl-info-card"><GraduationCap size={18}/><span>Check academic progress</span></div>
-            <div className="sl-info-card"><GraduationCap size={18}/><span>See your grades & status</span></div>
+            <div className="sl-info-card"><GraduationCap size={18}/><span>View your profile & progress</span></div>
+            <div className="sl-info-card"><GraduationCap size={18}/><span>Check grades per subject</span></div>
+            <div className="sl-info-card"><GraduationCap size={18}/><span>View activities & announcements</span></div>
           </div>
         </div>
 
@@ -82,55 +90,38 @@ export default function StudentLogin({ onStudentLogin, onBackToAdmin }) {
 
         <div className="lp-right">
           <div className="lp-card" ref={cardRef} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}>
-            <div className="lp-card-bar" />
-
-            <div className="lp-card-icon" style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.2), rgba(34,197,94,0.1))', border: '1px solid rgba(34,197,94,0.3)', color: '#22c55e' }}>
+            <div className="lp-card-bar" style={{ background: 'linear-gradient(90deg, #e8650a, #c45200)' }} />
+            <div className="lp-card-icon" style={{ background: 'rgba(232,101,10,0.12)', border: '1px solid rgba(232,101,10,0.3)', color: '#e8650a' }}>
               <GraduationCap size={26} strokeWidth={1.6} />
             </div>
-
-            <h2 className="lp-card-title">Student Portal</h2>
-            <p className="lp-card-sub">Enter your Student ID and Last Name</p>
-
+            <h2 className="lp-card-title">Student Login</h2>
+            <p className="lp-card-sub">Sign in with your Student ID and password</p>
             {error && <div className="lp-error"><span>⚠</span> {error}</div>}
-
             <form onSubmit={handleSubmit} className="lp-form">
               <div className="lp-field">
                 <label>Student ID</label>
                 <div className="lp-input">
                   <Hash size={15} strokeWidth={2} className="lp-input-icon" />
-                  <input
-                    name="student_id"
-                    value={form.student_id}
-                    onChange={handle}
-                    placeholder="e.g. 2102069"
-                    required
-                  />
+                  <input name="student_id" value={form.student_id} onChange={handle} placeholder="e.g. 2021-00001" autoComplete="off" required />
                 </div>
               </div>
-
               <div className="lp-field">
-                <label>Last Name</label>
+                <label>Password</label>
                 <div className="lp-input">
-                  <User size={15} strokeWidth={2} className="lp-input-icon" />
-                  <input
-                    name="last_name"
-                    value={form.last_name}
-                    onChange={handle}
-                    placeholder="e.g. Bernal"
-                    required
-                  />
+                  <Lock size={15} strokeWidth={2} className="lp-input-icon" />
+                  <input name="password" type={showPass ? 'text' : 'password'} value={form.password} onChange={handle} placeholder="Enter password" required />
+                  <button type="button" className="lp-eye" onClick={() => setShowPass(s => !s)} tabIndex={-1}>
+                    {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
                 </div>
               </div>
-
-              <button type="submit" className="lp-btn sl-btn" disabled={loading}>
-                {loading ? <><span className="spinner" /> Verifying...</> : 'Access My Profile'}
+              <button type="submit" className="lp-btn" style={{ background: 'linear-gradient(135deg,#e8650a,#c45200)' }} disabled={loading}>
+                {loading ? <><span className="spinner" /> Signing in...</> : 'Access Student Portal'}
               </button>
             </form>
-
-            <button className="sl-back-btn" onClick={onBackToAdmin}>
-              <ArrowLeft size={14} strokeWidth={2} /> Back to Admin Login
+            <button className="sl-back-btn" onClick={() => navigate('/admin')}>
+              <ArrowLeft size={14} /> Back to Admin Login
             </button>
-
             <p className="lp-footer">CCS Student Profiling System &copy; {new Date().getFullYear()}</p>
           </div>
         </div>

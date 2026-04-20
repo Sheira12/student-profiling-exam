@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { getStudent, deleteStudent } from '../api/students'
+import { getStudent, deleteStudent } from '../api/supabase-students'
 
 const Section = ({ title, items }) => {
   if (!items?.length) return null
@@ -30,7 +30,7 @@ export default function StudentProfile() {
   const handleDelete = async () => {
     if (!confirm('Delete this student?')) return
     await deleteStudent(id)
-    navigate('/')
+    navigate('/admin/students')
   }
 
   if (loading) return <div className="loading">Loading...</div>
@@ -46,10 +46,10 @@ export default function StudentProfile() {
           <p>{student.course} — {student.year_level ? `Year ${student.year_level}` : ''}</p>
         </div>
         <div className="profile-actions">
-          <Link to={`/progress/${id}`} className="btn btn-primary">📊 Academic Progress</Link>
-          <Link to={`/edit/${id}`} className="btn btn-edit">Edit</Link>
+          <Link to={`/admin/progress/${id}`} className="btn btn-primary">📊 Academic Progress</Link>
+          <Link to={`/admin/edit/${id}`} className="btn btn-edit">Edit</Link>
           <button className="btn btn-delete" onClick={handleDelete}>Delete</button>
-          <Link to="/students" className="btn">Back</Link>
+          <Link to="/admin/students" className="btn">Back</Link>
         </div>
       </div>
 
@@ -63,6 +63,14 @@ export default function StudentProfile() {
               <tr><td>Gender</td><td>{student.gender || '—'}</td></tr>
               <tr><td>Date of Birth</td><td>{student.date_of_birth || '—'}</td></tr>
               <tr><td>Address</td><td>{student.address || '—'}</td></tr>
+              <tr>
+                <td>Portal Password</td>
+                <td>
+                  <span style={{ fontFamily: 'monospace', background: '#f3f4f6', padding: '2px 8px', borderRadius: 4, fontSize: '0.85rem' }}>
+                    {student.password || student.student_id || '—'}
+                  </span>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>

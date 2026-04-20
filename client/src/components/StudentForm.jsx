@@ -6,7 +6,7 @@ const EMPTY_FORM = {
   course: '', year_level: '', gpa: '',
   enrollment_status: 'enrolled',
   academic_awards: '', skills: '', non_academic_activities: '',
-  affiliations: ''
+  affiliations: '', password: ''
 }
 
 const ARRAY_FIELDS = ['academic_awards', 'skills', 'non_academic_activities', 'affiliations']
@@ -31,6 +31,8 @@ export function formToPayload(form) {
   ;['email', 'phone', 'address', 'date_of_birth', 'gender', 'course'].forEach(f => {
     if (payload[f] === '') payload[f] = null
   })
+  // Keep password as-is; if empty, don't overwrite
+  if (!payload.password) delete payload.password
   delete payload.enrollment_status
   return payload
 }
@@ -43,6 +45,7 @@ export function payloadToForm(student) {
   if (!form.enrollment_status) {
     form.enrollment_status = student.year_level ? 'enrolled' : 'not_enrolled'
   }
+  form.password = student.password || ''
   return form
 }
 
@@ -108,6 +111,10 @@ export default function StudentForm({ initialData, onSubmit, loading }) {
             <label>Address</label>
             <input name="address" value={form.address} onChange={handle} />
           </div>
+          <div className="form-group">
+            <label>Portal Password <small>(leave blank to keep current)</small></label>
+            <input name="password" type="text" value={form.password} onChange={handle} placeholder="Set student login password" />
+          </div>
         </div>
       </fieldset>
 
@@ -131,7 +138,12 @@ export default function StudentForm({ initialData, onSubmit, loading }) {
         <div className="form-grid">
           <div className="form-group">
             <label>Course / Program</label>
-            <input name="course" value={form.course} onChange={handle} />
+            <select name="course" value={form.course} onChange={handle}>
+              <option value="">Select Course</option>
+              <option value="Bachelor of Science in Information Technology">Bachelor of Science in Information Technology</option>
+              <option value="Bachelor of Science in Computer Science">Bachelor of Science in Computer Science</option>
+              <option value="Bachelor of Science in Information System">Bachelor of Science in Information System</option>
+            </select>
           </div>
           <div className="form-group">
             <label>Year Level</label>
@@ -173,28 +185,52 @@ export default function StudentForm({ initialData, onSubmit, loading }) {
       </fieldset>
 
       <fieldset>
-        <legend>Suspension</legend>
+        <legend>Disciplinary Records</legend>
         <div className="suspension-list">
           {suspensions.map((s, i) => (
             <div key={i} className="suspension-row">
-              <input
+              <select
                 className="suspension-input"
-                placeholder="Reason (e.g. Cheating)"
                 value={s.reason}
                 onChange={e => updateSuspension(i, 'reason', e.target.value)}
-              />
-              <input
+              >
+                <option value="">Select Sanction Type</option>
+                <option value="Academic Dishonesty">Academic Dishonesty</option>
+                <option value="Plagiarism">Plagiarism</option>
+                <option value="Cheating in Examination">Cheating in Examination</option>
+                <option value="Violation of Code of Conduct">Violation of Code of Conduct</option>
+                <option value="Disruptive Behavior">Disruptive Behavior</option>
+                <option value="Attendance Violation">Attendance Violation</option>
+                <option value="Substance Abuse">Substance Abuse</option>
+                <option value="Harassment">Harassment</option>
+                <option value="Vandalism">Vandalism</option>
+                <option value="Unauthorized Access">Unauthorized Access</option>
+                <option value="Fighting/Physical Altercation">Fighting/Physical Altercation</option>
+                <option value="Dress Code Violation">Dress Code Violation</option>
+                <option value="Late Submission of Requirements">Late Submission of Requirements</option>
+                <option value="Other">Other</option>
+              </select>
+              <select
                 className="suspension-input suspension-days"
-                type="number"
-                min="1"
-                placeholder="Days"
                 value={s.days}
                 onChange={e => updateSuspension(i, 'days', e.target.value)}
-              />
+              >
+                <option value="">Select Duration</option>
+                <option value="1">1 Day</option>
+                <option value="3">3 Days</option>
+                <option value="5">5 Days</option>
+                <option value="7">1 Week</option>
+                <option value="14">2 Weeks</option>
+                <option value="30">1 Month</option>
+                <option value="60">2 Months</option>
+                <option value="90">1 Semester</option>
+                <option value="180">1 Academic Year</option>
+                <option value="365">Indefinite</option>
+              </select>
               <button type="button" className="suspension-remove" onClick={() => removeSuspension(i)}>✕</button>
             </div>
           ))}
-          <button type="button" className="suspension-add" onClick={addSuspension}>+ Add Suspension</button>
+          <button type="button" className="suspension-add" onClick={addSuspension}>+ Add Disciplinary Record</button>
         </div>
       </fieldset>
 

@@ -7,7 +7,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "https://student-profiling-exam.vercel.app/", // update to your Vercel URL after deploy e.g. "https://your-app.vercel.app"
+    origin: ["http://localhost:5173", "http://localhost:3000", "https://student-profiling-exam.vercel.app"], // Allow both local development and production
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type"],
   }),

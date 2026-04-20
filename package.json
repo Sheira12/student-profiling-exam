@@ -4,6 +4,10 @@
   "scripts": {
     "dev:client": "cd client && npm run dev",
     "dev:api": "node api/index.js",
-    "install:all": "npm install && cd client && npm install"
-  }
+    "install:all": "npm install && cd client && npm install",
+    "build": "cd client && npm run build",
+    "start": "node api/index.js"
+  },
+  "dependencies": {},
+  "devDependencies": {}
 }

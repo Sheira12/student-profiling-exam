@@ -1,9 +1,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
-import { getStudents, deleteStudent } from '../api/students'
-import { LayoutGrid, List, AlignJustify, Download, UserPlus, Eye, Pencil, Trash2, GraduationCap, UserCheck, UserX } from 'lucide-react'
+import { getStudents, deleteStudent } from '../api/supabase-students'
+import { LayoutGrid, List, AlignJustify, Download, UserPlus, Eye, Pencil, Trash2, GraduationCap, UserCheck, UserX, Users, Filter, Search } from 'lucide-react'
 import SearchBar from '../components/SearchBar'
-
 const COURSES = ['All Courses', 'Information Technology', 'Computer Science', 'Information Systems']
 const AFFILIATIONS = ['All Affiliations', 'Student Council', 'ROTC', 'IEEE', 'Sports Club']
 const YEARS = ['All Years', '1st Year', '2nd Year', '3rd Year', '4th Year']
@@ -119,10 +118,13 @@ export default function StudentInformation({ role = 'admin' }) {
       {toast && <div className={`toast ${toast.type}`}>{toast.msg}</div>}
 
       {/* Page Header */}
-      <div className="si-header">
-        <div>
-          <h1>Student Information</h1>
-          <p>Manage student profiles, academic records, and personal histories.</p>
+      <div className="page-header-banner">
+        <div className="page-header-left">
+          <div className="page-header-icon"><Users size={22} /></div>
+          <div>
+            <h1 className="page-header-title">Student Information</h1>
+            <p className="page-header-sub">Manage student profiles, academic records, and personal histories.</p>
+          </div>
         </div>
         <div className="si-header-actions">
           {role === 'admin' && (
@@ -131,7 +133,7 @@ export default function StudentInformation({ role = 'admin' }) {
             </button>
           )}
           {role === 'admin' && (
-            <button className="btn-add-student" onClick={() => navigate('/add')}>
+            <button className="btn-add-student" onClick={() => navigate('/admin/add')}>
               <UserPlus size={15} strokeWidth={2} /> Add Student
             </button>
           )}
@@ -225,8 +227,8 @@ export default function StudentInformation({ role = 'admin' }) {
                           : <span className="status-badge not-enrolled">Not Enrolled</span>
                         }
                         <div className="row-actions">
-                          <Link to={`/students/${s.id}`} className="row-btn view"><Eye size={12} strokeWidth={2}/> View</Link>
-                          {role === 'admin' && <Link to={`/edit/${s.id}`} className="row-btn edit"><Pencil size={12} strokeWidth={2}/> Edit</Link>}
+                          <Link to={`/admin/students/${s.id}`} className="row-btn view"><Eye size={12} strokeWidth={2}/> View</Link>
+                          {role === 'admin' && <Link to={`/admin/edit/${s.id}`} className="row-btn edit"><Pencil size={12} strokeWidth={2}/> Edit</Link>}
                           {role === 'admin' && <button className="row-btn delete" onClick={() => handleDelete(s.id)}><Trash2 size={12} strokeWidth={2}/> Delete</button>}
                         </div>
                       </div>
@@ -268,8 +270,8 @@ export default function StudentInformation({ role = 'admin' }) {
                           <td className="address-cell">{s.address || '—'}</td>
                           <td>
                             <div className="row-actions">
-                              <Link to={`/students/${s.id}`} className="row-btn view"><Eye size={12} strokeWidth={2}/> View</Link>
-                              {role === 'admin' && <Link to={`/edit/${s.id}`} className="row-btn edit"><Pencil size={12} strokeWidth={2}/> Edit</Link>}
+                              <Link to={`/admin/students/${s.id}`} className="row-btn view"><Eye size={12} strokeWidth={2}/> View</Link>
+                              {role === 'admin' && <Link to={`/admin/edit/${s.id}`} className="row-btn edit"><Pencil size={12} strokeWidth={2}/> Edit</Link>}
                               {role === 'admin' && <button className="row-btn delete" onClick={() => handleDelete(s.id)}><Trash2 size={12} strokeWidth={2}/> Delete</button>}
                             </div>
                           </td>
