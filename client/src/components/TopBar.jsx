@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { Moon, Sun, LogOut, ChevronDown, Menu } from 'lucide-react'
 import NotificationPanel from './NotificationPanel'
 
-export default function TopBar({ onLogout, user, onMenuToggle }) {
+export default function TopBar({ onLogout, user, onMenuToggle, isMobile }) {
   const [dark, setDark] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef(null)
@@ -25,9 +25,6 @@ export default function TopBar({ onLogout, user, onMenuToggle }) {
 
   return (
     <header className="topbar">
-      <button className="mobile-menu-btn" onClick={onMenuToggle} title="Menu">
-        <Menu size={22} strokeWidth={2} />
-      </button>
       <div className="topbar-title">Student Information System</div>
 
       <div className="topbar-divider" />

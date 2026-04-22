@@ -56,22 +56,107 @@ export default function StudentInformation({ role = 'admin' }) {
     }
   }
 
-  const handleExport = () => {
-    const rows = [
-      ['Student ID', 'First Name', 'Last Name', 'Course', 'Year', 'GPA', 'Skills', 'Affiliations'],
-      ...allStudents.map(s => [
-        s.student_id, s.first_name, s.last_name, s.course || '',
-        s.year_level || '', s.gpa || '',
-        (s.skills || []).join('; '),
-        (s.affiliations || []).join('; ')
-      ])
-    ].map(r => r.map(v => `"${v}"`).join(',')).join('\n')
-    const blob = new Blob([rows], { type: 'text/csv' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url; a.download = 'students.csv'; a.click()
-    URL.revokeObjectURL(url)
-    showToast('Exported successfully.')
+  const handleExport = async () => {
+    try {
+      // Dynamically import pdfmake
+      const pdfMakeModule = await import('pdfmake/build/pdfmake')
+      const pdfFontsModule = await import('pdfmake/build/vfs_fonts')
+      
+      const pdfMake = pdfMakeModule.default
+      pdfMake.vfs = pdfFontsModule.default
+
+      // Prepare table body
+      const tableBody = [
+        // Header row
+        [
+          { text: 'Student ID', style: 'tableHeader' },
+          { text: 'First Name', style: 'tableHeader' },
+          { text: 'Last Name', style: 'tableHeader' },
+          { text: 'Course', style: 'tableHeader' },
+          { text: 'Year', style: 'tableHeader' },
+          { text: 'GPA', style: 'tableHeader' },
+          { text: 'Skills', style: 'tableHeader' },
+          { text: 'Affiliations', style: 'tableHeader' }
+        ],
+        // Data rows
+        ...allStudents.map(s => [
+          s.student_id || '',
+          s.first_name || '',
+          s.last_name || '',
+          s.course || '',
+          s.year_level?.toString() || '',
+          s.gpa ? s.gpa.toFixed(2) : '',
+          (s.skills || []).join(', '),
+          (s.affiliations || []).join(', ')
+        ])
+      ]
+
+      // PDF document definition
+      const docDefinition = {
+        pageSize: 'A4',
+        pageOrientation: 'landscape',
+        pageMargins: [40, 60, 40, 60],
+        content: [
+          {
+            text: 'Student Information Report',
+            style: 'header',
+            margin: [0, 0, 0, 10]
+          },
+          {
+            text: `Generated: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`,
+            style: 'subheader',
+            margin: [0, 0, 0, 5]
+          },
+          {
+            text: `Total Students: ${allStudents.length}`,
+            style: 'subheader',
+            margin: [0, 0, 0, 20]
+          },
+          {
+            table: {
+              headerRows: 1,
+              widths: ['auto', 'auto', 'auto', '*', 'auto', 'auto', '*', '*'],
+              body: tableBody
+            },
+            layout: {
+              fillColor: function (rowIndex) {
+                return rowIndex === 0 ? '#ea580c' : (rowIndex % 2 === 0 ? '#f3f4f6' : null)
+              },
+              hLineWidth: function () { return 0.5 },
+              vLineWidth: function () { return 0.5 },
+              hLineColor: function () { return '#e5e7eb' },
+              vLineColor: function () { return '#e5e7eb' }
+            }
+          }
+        ],
+        styles: {
+          header: {
+            fontSize: 18,
+            bold: true,
+            color: '#1f2937'
+          },
+          subheader: {
+            fontSize: 10,
+            color: '#6b7280'
+          },
+          tableHeader: {
+            bold: true,
+            fontSize: 9,
+            color: 'white'
+          }
+        },
+        defaultStyle: {
+          fontSize: 8
+        }
+      }
+
+      // Generate and download PDF
+      pdfMake.createPdf(docDefinition).download(`students-${new Date().toISOString().split('T')[0]}.pdf`)
+      showToast('Exported successfully.')
+    } catch (error) {
+      console.error('Error generating PDF:', error)
+      showToast('Failed to export PDF.', 'error')
+    }
   }
 
   // Client-side filtering — fast, no extra API calls
@@ -128,7 +213,7 @@ export default function StudentInformation({ role = 'admin' }) {
         </div>
         <div className="si-header-actions">
           {role === 'admin' && (
-            <button className="btn-export" onClick={handleExport} title="Export to CSV">
+            <button className="btn-export" onClick={handleExport} title="Export to PDF">
               <Download size={14} strokeWidth={2} /> Export
             </button>
           )}

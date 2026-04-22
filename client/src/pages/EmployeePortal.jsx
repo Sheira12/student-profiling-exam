@@ -8,7 +8,8 @@ import {
 import {
   getAssignmentsByEmployee, getCurriculumDeploymentsByEmployee,
   updateCurriculumDeployment, getNotifications, markAllNotificationsRead,
-  getMessages, sendMessage, getAdviserAnnouncements, getActivitiesByAdviser
+  getMessages, sendMessage, getAdviserAnnouncements, getActivitiesByAdviser,
+  getDeploymentsByAdviserSubject
 } from '../api/rbac'
 import AdviserAnnouncementManager from './AdviserAnnouncementManager'
 import ActivityManager from './ActivityManager'
@@ -39,6 +40,14 @@ function StatusBadge({ status }) {
 export default function EmployeePortal({ employee, onLogout }) {
   const [tab, setTab] = useState('overview')
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('adviser_dark_mode') === 'dark')
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768)
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
   const [students, setStudents] = useState([])
   const [deployments, setDeployments] = useState([])
   const [notifications, setNotifications] = useState([])
@@ -170,6 +179,32 @@ export default function EmployeePortal({ employee, onLogout }) {
       {/* Topbar */}
       <header className="sp-topbar">
         <div className="sp-topbar-brand">
+          {/* Hamburger — always rendered, shown via inline style on mobile */}
+          <button
+            onClick={() => setMobileMenuOpen(o => !o)}
+            title="Toggle menu"
+            type="button"
+            style={{
+              display: isMobile ? 'flex' : 'none',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 40,
+              height: 40,
+              background: 'var(--orange-light)',
+              border: '1px solid var(--orange)',
+              borderRadius: 8,
+              cursor: 'pointer',
+              color: 'var(--orange)',
+              flexShrink: 0,
+              marginRight: 4,
+            }}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
           <img src="/logo.png" alt="CCS" className="sp-topbar-logo" />
           <div>
             <div className="sp-topbar-title">Adviser Portal</div>
@@ -177,7 +212,7 @@ export default function EmployeePortal({ employee, onLogout }) {
           </div>
         </div>
         <div className="sp-topbar-right">
-          <button className="icon-btn" onClick={toggleDark} title={darkMode ? 'Light mode' : 'Dark mode'} style={{ fontSize: '1.1rem' }}>
+          <button className="icon-btn" onClick={toggleDark} title={darkMode ? 'Light mode' : 'Dark mode'}>
             {darkMode ? <Sun size={18} /> : <Moon size={18} />}
           </button>
           <div className="sp-user-wrap">
@@ -208,8 +243,65 @@ export default function EmployeePortal({ employee, onLogout }) {
       </header>
 
       <div className="sp-body">
+        {/* Mobile overlay */}
+        {isMobile && mobileMenuOpen && (
+          <div
+            onClick={() => setMobileMenuOpen(false)}
+            style={{
+              position: 'fixed', inset: 0,
+              background: 'rgba(0,0,0,0.5)',
+              zIndex: 9998,
+            }}
+          />
+        )}
+
         {/* Sidebar */}
-        <aside className="sp-sidebar">
+        <aside
+          style={{
+            width: isMobile ? 270 : 220,
+            flexShrink: 0,
+            background: darkMode ? '#1e293b' : 'white',
+            borderRight: `1px solid ${darkMode ? '#334155' : 'var(--border)'}`,
+            display: 'flex',
+            flexDirection: 'column',
+            padding: 0,
+            // Mobile: fixed drawer
+            ...(isMobile ? {
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              bottom: 0,
+              height: '100vh',
+              zIndex: 9999,
+              transform: mobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)',
+              transition: 'transform 0.3s cubic-bezier(0.4,0,0.2,1)',
+              boxShadow: '4px 0 24px rgba(0,0,0,0.18)',
+              overflowY: 'auto',
+            } : {
+              position: 'sticky',
+              top: 58,
+              height: 'calc(100vh - 58px)',
+              overflowY: 'auto',
+            }),
+          }}
+        >
+          {/* Close button (mobile only) */}
+          {isMobile && (
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              style={{
+                position: 'absolute', top: 12, right: 12,
+                background: 'rgba(0,0,0,0.08)', border: 'none',
+                borderRadius: 6, cursor: 'pointer',
+                color: 'var(--text)', padding: 6,
+                width: 32, height: 32,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                zIndex: 10,
+              }}
+            >
+              <X size={18} />
+            </button>
+          )}
           <div className="sp-sidebar-profile">
             <div className="sp-sidebar-avatar" style={{ background: 'linear-gradient(135deg,#3b82f6,#6366f1)' }}>
               {employee.first_name?.[0]}{employee.last_name?.[0]}
@@ -220,7 +312,11 @@ export default function EmployeePortal({ employee, onLogout }) {
           </div>
           <nav className="sp-sidebar-nav">
             {navItems.map(({ id, icon: Icon, label, badge }) => (
-              <button key={id} className={`sp-nav-btn ${tab === id ? 'active' : ''}`} onClick={() => setTab(id)}>
+              <button
+                key={id}
+                className={`sp-nav-btn ${tab === id ? 'active' : ''}`}
+                onClick={() => { setTab(id); setMobileMenuOpen(false) }}
+              >
                 <Icon size={17} strokeWidth={1.8} />
                 <span>{label}</span>
                 {badge > 0 && <span className="emp-nav-badge">{badge}</span>}

@@ -689,3 +689,15 @@ export const getStudentDeploymentsWithAdvisers = async (studentId) => {
   if (error) throw error
   return { data }
 }
+
+// ── Get curriculum deployments where adviser_id = this employee ──
+// Groups by subject so adviser sees all students per subject
+export const getDeploymentsByAdviserSubject = async (employeeId) => {
+  const { data, error } = await supabase
+    .from('curriculum_deployments')
+    .select('*, students(id, student_id, first_name, last_name, course, year_level)')
+    .eq('adviser_id', employeeId)
+    .order('subject_code').order('year_level')
+  if (error) throw error
+  return { data }
+}

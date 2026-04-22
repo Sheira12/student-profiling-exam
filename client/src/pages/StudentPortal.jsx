@@ -4,7 +4,7 @@ import {
   LogOut, ChevronDown, Home, TrendingUp, CheckCircle, Clock,
   XCircle, Star, Activity, Shield, Mail, Phone, MapPin,
   Calendar, Hash, ChevronRight, BarChart2, Bell, MessageSquare,
-  Send, Briefcase, RefreshCw, Megaphone, Moon, Sun, CalendarDays, ArrowLeft
+  Send, Briefcase, RefreshCw, Megaphone, Moon, Sun, CalendarDays, ArrowLeft, X
 } from 'lucide-react'
 import { CURRICULUM } from '../data/curriculum'
 import {
@@ -12,6 +12,8 @@ import {
   getMessages, sendMessage, getCurriculumDeployments, getStudentAnnouncements,
   getClassSchedules
 } from '../api/rbac'
+import { getStudent } from '../api/supabase-students'
+import { setStudent } from '../hooks/useAuth'
 import StudentActivitiesView from './StudentActivitiesView'
 import StudentGradesView from './StudentGradesView'
 
@@ -36,10 +38,31 @@ function StatusBadge({ status }) {
   return <span className={`apt-status ${cls || ''}`}>{status}</span>
 }
 
-export default function StudentPortal({ student, onLogout }) {
+export default function StudentPortal({ student: initialStudent, onLogout }) {
+  const [student, setStudentInfo] = useState(initialStudent)
   const [tab, setTab] = useState('overview')
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('student_dark_mode') === 'dark')
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768)
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  // Refresh student data from DB on mount — session storage may be stale
+  useEffect(() => {
+    getStudent(initialStudent.id)
+      .then(({ data }) => {
+        if (data) {
+          setStudentInfo(data)
+          setStudent(data) // keep session storage in sync
+        }
+      })
+      .catch(() => {}) // silently fail — use cached data
+  }, [initialStudent.id])
   const [deployments, setDeployments] = useState([])
   const [adviser, setAdviser] = useState(null)
   const [notifications, setNotifications] = useState([])
@@ -83,6 +106,15 @@ export default function StudentPortal({ student, onLogout }) {
 
   const loadPortalData = async () => {
     const safe = (fn) => fn.catch(() => ({ data: null }))
+
+    // Refresh student data from DB
+    try {
+      const { data: freshStudent } = await getStudent(student.id)
+      if (freshStudent) {
+        setStudentInfo(freshStudent)
+        setStudent(freshStudent)
+      }
+    } catch {}
 
     const asgnResult = await safe(getAssignmentByStudent(student.id))
     const adviserData = asgnResult.data || null
@@ -152,6 +184,32 @@ export default function StudentPortal({ student, onLogout }) {
       {/* ── Topbar ── */}
       <header className="sp-topbar">
         <div className="sp-topbar-brand">
+          {/* Hamburger — shown on mobile via inline style */}
+          <button
+            onClick={() => setMobileMenuOpen(o => !o)}
+            title="Toggle menu"
+            type="button"
+            style={{
+              display: isMobile ? 'flex' : 'none',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 40,
+              height: 40,
+              background: 'var(--orange-light)',
+              border: '1px solid var(--orange)',
+              borderRadius: 8,
+              cursor: 'pointer',
+              color: 'var(--orange)',
+              flexShrink: 0,
+              marginRight: 4,
+            }}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
           <img src="/logo.png" alt="CCS" className="sp-topbar-logo" />
           <div>
             <div className="sp-topbar-title">Student Portal</div>
@@ -189,8 +247,64 @@ export default function StudentPortal({ student, onLogout }) {
 
       <div className="sp-body">
 
+        {/* Mobile overlay */}
+        {isMobile && mobileMenuOpen && (
+          <div
+            onClick={() => setMobileMenuOpen(false)}
+            style={{
+              position: 'fixed', inset: 0,
+              background: 'rgba(0,0,0,0.5)',
+              zIndex: 9998,
+            }}
+          />
+        )}
+
         {/* ── Sidebar ── */}
-        <aside className="sp-sidebar">
+        <aside
+          style={{
+            width: isMobile ? 270 : 220,
+            flexShrink: 0,
+            background: darkMode ? '#1e293b' : 'white',
+            borderRight: `1px solid ${darkMode ? '#334155' : 'var(--border)'}`,
+            display: 'flex',
+            flexDirection: 'column',
+            padding: 0,
+            ...(isMobile ? {
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              bottom: 0,
+              height: '100vh',
+              zIndex: 9999,
+              transform: mobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)',
+              transition: 'transform 0.3s cubic-bezier(0.4,0,0.2,1)',
+              boxShadow: '4px 0 24px rgba(0,0,0,0.18)',
+              overflowY: 'auto',
+            } : {
+              position: 'sticky',
+              top: 58,
+              height: 'calc(100vh - 58px)',
+              overflowY: 'auto',
+            }),
+          }}
+        >
+          {/* Close button (mobile only) */}
+          {isMobile && (
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              style={{
+                position: 'absolute', top: 12, right: 12,
+                background: 'rgba(0,0,0,0.08)', border: 'none',
+                borderRadius: 6, cursor: 'pointer',
+                color: 'var(--text)', padding: 6,
+                width: 32, height: 32,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                zIndex: 10,
+              }}
+            >
+              <X size={18} />
+            </button>
+          )}
           <div className="sp-sidebar-profile">
             <div className="sp-sidebar-avatar">{student.first_name?.[0]}{student.last_name?.[0]}</div>
             <div className="sp-sidebar-name">{student.first_name} {student.last_name}</div>
@@ -205,7 +319,7 @@ export default function StudentPortal({ student, onLogout }) {
               <button
                 key={id}
                 className={`sp-nav-btn ${tab === id ? 'active' : ''}`}
-                onClick={() => setTab(id)}
+                onClick={() => { setTab(id); setMobileMenuOpen(false) }}
               >
                 <Icon size={17} strokeWidth={1.8} />
                 <span>{label}</span>
@@ -343,16 +457,27 @@ export default function StudentPortal({ student, onLogout }) {
 
               {/* Adviser card */}
               {adviser?.employees && (
-                <div className="sp-overview-awards" style={{ borderColor: '#bfdbfe', background: '#eff6ff' }}>
-                  <div className="sp-overview-awards-title" style={{ color: '#1d4ed8' }}><Briefcase size={15} /> Your Assigned Adviser</div>
+                <div className="sp-overview-awards" style={{
+                  borderColor: darkMode ? '#334155' : '#bfdbfe',
+                  background: darkMode ? '#1e293b' : '#eff6ff'
+                }}>
+                  <div className="sp-overview-awards-title" style={{ color: darkMode ? '#60a5fa' : '#1d4ed8' }}>
+                    <Briefcase size={15} /> Your Assigned Adviser
+                  </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6 }}>
                     <div className="rq-avatar" style={{ background: 'linear-gradient(135deg,#3b82f6,#6366f1)', width: 40, height: 40, fontSize: '0.85rem' }}>
                       {adviser.employees.first_name?.[0]}{adviser.employees.last_name?.[0]}
                     </div>
                     <div>
-                      <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{adviser.employees.first_name} {adviser.employees.last_name}</div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--muted)' }}>{adviser.employees.position} · {adviser.employees.department}</div>
-                      {adviser.employees.email && <div style={{ fontSize: '0.75rem', color: '#3b82f6' }}>{adviser.employees.email}</div>}
+                      <div style={{ fontWeight: 700, fontSize: '0.9rem', color: darkMode ? '#f1f5f9' : 'var(--text)' }}>
+                        {adviser.employees.first_name} {adviser.employees.last_name}
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: darkMode ? '#94a3b8' : 'var(--muted)' }}>
+                        {adviser.employees.position} · {adviser.employees.department}
+                      </div>
+                      {adviser.employees.email && (
+                        <div style={{ fontSize: '0.75rem', color: '#60a5fa' }}>{adviser.employees.email}</div>
+                      )}
                     </div>
                     <button className="rq-btn-run" style={{ marginLeft: 'auto', padding: '7px 14px', fontSize: '0.8rem' }} onClick={() => setTab('messages')}>
                       <MessageSquare size={13} /> Message
@@ -502,21 +627,23 @@ export default function StudentPortal({ student, onLogout }) {
             <div className="sp-section">
               <div className="sp-section-header"><CalendarDays size={18} /><h2>Class Schedule</h2></div>
               {!adviser?.employees ? (
-                <div className="sp-clean-record"><div className="sp-clean-icon" style={{ background: '#e0e7ff', color: '#4f46e5' }}><CalendarDays size={32} /></div><h3 style={{ color: '#4f46e5' }}>No schedule available</h3><p>No adviser assigned yet.</p></div>
+                <div className="sp-clean-record"><div className="sp-clean-icon" style={{ background: darkMode ? '#1e293b' : '#e0e7ff', color: '#4f46e5' }}><CalendarDays size={32} /></div><h3 style={{ color: '#4f46e5' }}>No schedule available</h3><p>No adviser assigned yet.</p></div>
               ) : schedules.length === 0 ? (
-                <div className="sp-clean-record"><div className="sp-clean-icon" style={{ background: '#e0e7ff', color: '#4f46e5' }}><CalendarDays size={32} /></div><h3 style={{ color: '#4f46e5' }}>No schedule posted</h3><p>Your adviser hasn't posted a schedule yet.</p></div>
+                <div className="sp-clean-record"><div className="sp-clean-icon" style={{ background: darkMode ? '#1e293b' : '#e0e7ff', color: '#4f46e5' }}><CalendarDays size={32} /></div><h3 style={{ color: '#4f46e5' }}>No schedule posted</h3><p>Your adviser hasn't posted a schedule yet.</p></div>
               ) : (() => {
                 const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
-                const DAY_COLORS = { Monday: '#dbeafe', Tuesday: '#ede9fe', Wednesday: '#d1fae5', Thursday: '#fef3c7', Friday: '#fee2e2', Saturday: '#f0fdf4', Sunday: '#fce7f3' }
+                const DAY_COLORS_LIGHT = { Monday: '#dbeafe', Tuesday: '#ede9fe', Wednesday: '#d1fae5', Thursday: '#fef3c7', Friday: '#fee2e2', Saturday: '#f0fdf4', Sunday: '#fce7f3' }
+                const DAY_COLORS_DARK  = { Monday: '#1e3a5f', Tuesday: '#2e1065', Wednesday: '#064e3b', Thursday: '#451a03', Friday: '#450a0a', Saturday: '#052e16', Sunday: '#4a044e' }
                 const byDay = {}; DAYS.forEach(d => { byDay[d] = [] }); schedules.forEach(s => { if (byDay[s.day_of_week]) byDay[s.day_of_week].push(s) })
                 const fmt = (t) => { if (!t) return ''; const [h, m] = t.split(':'); const hr = parseInt(h); return `${hr > 12 ? hr - 12 : hr || 12}:${m} ${hr >= 12 ? 'PM' : 'AM'}` }
                 return (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
                     {DAYS.map(day => {
                       const items = byDay[day]; if (!items?.length) return null
+                      const headBg = darkMode ? (DAY_COLORS_DARK[day] || '#1e293b') : (DAY_COLORS_LIGHT[day] || '#f3f4f6')
                       return (
                         <div key={day} className="emp-status-col">
-                          <div className="emp-status-col-head" style={{ background: DAY_COLORS[day] || '#f3f4f6', color: '#374151' }}>
+                          <div className="emp-status-col-head" style={{ background: headBg, color: darkMode ? '#e2e8f0' : '#374151' }}>
                             <CalendarDays size={14} /> {day}
                           </div>
                           {items.map(s => (
@@ -666,11 +793,11 @@ export default function StudentPortal({ student, onLogout }) {
                     </div>
                     <div style={{ display: 'flex', gap: 10 }}>
                       <div style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#16a34a' }}>{selectedSubject.grade || '—'}</div>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 700, color: darkMode ? '#34d399' : '#16a34a' }}>{selectedSubject.grade || '—'}</div>
                         <div style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>Grade</div>
                       </div>
                       <div style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: '1rem', fontWeight: 600 }}>{selectedSubject.status || '—'}</div>
+                        <div style={{ fontSize: '1rem', fontWeight: 600, color: darkMode ? '#f1f5f9' : 'var(--text)' }}>{selectedSubject.status || '—'}</div>
                         <div style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>Status</div>
                       </div>
                     </div>
@@ -726,10 +853,14 @@ export default function StudentPortal({ student, onLogout }) {
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
                         {deployments.map(dep => {
-                          const statusColors = { Enrolled: '#dbeafe', Ongoing: '#fef3c7', Passed: '#dcfce7', Failed: '#fee2e2', INC: '#f3e8ff', Dropped: '#f3f4f6', Pending: '#fff7ed' }
-                          const statusText = { Enrolled: '#1d4ed8', Ongoing: '#92400e', Passed: '#166534', Failed: '#991b1b', INC: '#7c3aed', Dropped: '#6b7280', Pending: '#c2410c' }
-                          const bg = statusColors[dep.status] || '#f3f4f6'
-                          const tc = statusText[dep.status] || '#6b7280'
+                          const statusColors = darkMode
+                            ? { Enrolled: '#1e3a5f', Ongoing: '#451a03', Passed: '#064e3b', Failed: '#450a0a', INC: '#2e1065', Dropped: '#1e293b', Pending: '#431407' }
+                            : { Enrolled: '#dbeafe', Ongoing: '#fef3c7', Passed: '#dcfce7', Failed: '#fee2e2', INC: '#f3e8ff', Dropped: '#f3f4f6', Pending: '#fff7ed' }
+                          const statusText = darkMode
+                            ? { Enrolled: '#60a5fa', Ongoing: '#fbbf24', Passed: '#34d399', Failed: '#f87171', INC: '#a78bfa', Dropped: '#94a3b8', Pending: '#fb923c' }
+                            : { Enrolled: '#1d4ed8', Ongoing: '#92400e', Passed: '#166534', Failed: '#991b1b', INC: '#7c3aed', Dropped: '#6b7280', Pending: '#c2410c' }
+                          const bg = statusColors[dep.status] || (darkMode ? '#1e293b' : '#f3f4f6')
+                          const tc = statusText[dep.status] || (darkMode ? '#94a3b8' : '#6b7280')
                           return (
                             <div key={dep.id} className="sp-overview-card" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8, cursor: 'pointer' }}
                               onClick={() => setSelectedSubject(dep)}>
@@ -737,17 +868,17 @@ export default function StudentPortal({ student, onLogout }) {
                                 <span style={{ fontWeight: 700, fontSize: '0.82rem', color: 'var(--muted)', fontFamily: 'monospace' }}>{dep.subject_code}</span>
                                 <span style={{ fontSize: '0.68rem', background: bg, color: tc, padding: '2px 8px', borderRadius: 10, fontWeight: 600 }}>{dep.status || '—'}</span>
                               </div>
-                              <div style={{ fontWeight: 600, fontSize: '0.875rem', lineHeight: 1.3 }}>{dep.subject_desc}</div>
+                              <div style={{ fontWeight: 600, fontSize: '0.875rem', lineHeight: 1.3, color: darkMode ? '#f1f5f9' : 'var(--text)' }}>{dep.subject_desc}</div>
                               <div style={{ display: 'flex', gap: 8, fontSize: '0.75rem', color: 'var(--muted)' }}>
                                 <span>{dep.units} units</span>
-                                {dep.grade && <span style={{ fontWeight: 700, color: '#16a34a' }}>Grade: {dep.grade}</span>}
+                                {dep.grade && <span style={{ fontWeight: 700, color: darkMode ? '#34d399' : '#16a34a' }}>Grade: {dep.grade}</span>}
                                 {dep.employees && (
                                   <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: 'var(--orange)' }}>
                                     👤 {dep.employees.first_name} {dep.employees.last_name}
                                   </span>
                                 )}
                               </div>
-                              <div style={{ fontSize: '0.72rem', color: '#3b82f6', display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                              <div style={{ fontSize: '0.72rem', color: darkMode ? '#60a5fa' : '#3b82f6', display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
                                 <ChevronRight size={12} /> View details
                               </div>
                             </div>

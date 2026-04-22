@@ -27,7 +27,16 @@ export function formToPayload(form) {
   })
   payload.year_level = payload.year_level ? parseInt(payload.year_level) : null
   payload.gpa = payload.gpa !== '' && payload.gpa !== undefined ? parseFloat(payload.gpa) : null
-  if (payload.enrollment_status === 'not_enrolled') payload.year_level = null
+
+  // If not enrolled, clear year_level so the student shows as not enrolled
+  if (payload.enrollment_status === 'not_enrolled') {
+    payload.year_level = null
+  }
+  // If enrolled but no year_level selected, default to 1
+  if (payload.enrollment_status === 'enrolled' && !payload.year_level) {
+    payload.year_level = 1
+  }
+
   ;['email', 'phone', 'address', 'date_of_birth', 'gender', 'course'].forEach(f => {
     if (payload[f] === '') payload[f] = null
   })
@@ -42,9 +51,8 @@ export function payloadToForm(student) {
   ARRAY_FIELDS.forEach(f => {
     form[f] = Array.isArray(student[f]) ? student[f].join(', ') : ''
   })
-  if (!form.enrollment_status) {
-    form.enrollment_status = student.year_level ? 'enrolled' : 'not_enrolled'
-  }
+  // Derive enrollment status from year_level (source of truth)
+  form.enrollment_status = student.year_level ? 'enrolled' : 'not_enrolled'
   form.password = student.password || ''
   return form
 }

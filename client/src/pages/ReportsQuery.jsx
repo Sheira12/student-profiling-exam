@@ -77,19 +77,155 @@ const ReportsQuery = () => {
     setHasQueried(false)
   }
 
-  const exportResults = () => {
-    const csv = [
-      ['Student ID','Name','Course','Year','GPA','Skills','Activities','Awards'].join(','),
-      ...filteredStudents.map(s => [
-        s.student_id, `"${s.first_name} ${s.last_name}"`, `"${s.course||''}"`,
-        s.year_level||'', s.gpa||'', `"${s.skills?.join('; ')||''}"`,
-        `"${s.non_academic_activities?.join('; ')||''}"`, `"${s.academic_awards?.join('; ')||''}"`
-      ].join(','))
-    ].join('\n')
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
-    a.download = `query-results-${new Date().toISOString().split('T')[0]}.csv`
-    a.click()
+  const exportResults = async () => {
+    try {
+      // Dynamically import pdfmake to avoid build issues
+      const pdfMakeModule = await import('pdfmake/build/pdfmake')
+      const pdfFontsModule = await import('pdfmake/build/vfs_fonts')
+      
+      const pdfMake = pdfMakeModule.default
+      pdfMake.vfs = pdfFontsModule.default
+
+      // Build filter description
+      const filterDescriptions = []
+      
+      // Check for active preset
+      if (activePreset) {
+        const preset = presetQueries.find(p => p.id === activePreset)
+        if (preset) {
+          filterDescriptions.push(`Quick Filter: ${preset.label}`)
+        }
+      }
+      
+      // Check for custom filters
+      if (customFilters.skill.trim()) {
+        filterDescriptions.push(`Skills: ${customFilters.skill}`)
+      }
+      if (customFilters.activity.trim()) {
+        filterDescriptions.push(`Activities: ${customFilters.activity}`)
+      }
+      if (customFilters.affiliation.trim()) {
+        filterDescriptions.push(`Affiliations: ${customFilters.affiliation}`)
+      }
+      if (customFilters.suspension.trim()) {
+        filterDescriptions.push(`Disciplinary Records: ${customFilters.suspension}`)
+      }
+      if (customFilters.course.trim()) {
+        filterDescriptions.push(`Course: ${customFilters.course}`)
+      }
+      if (customFilters.yearLevel) {
+        filterDescriptions.push(`Year Level: ${customFilters.yearLevel}`)
+      }
+      if (customFilters.gpa) {
+        filterDescriptions.push(`Minimum GPA: ${customFilters.gpa}`)
+      }
+      
+      const filterText = filterDescriptions.length > 0 
+        ? filterDescriptions.join(' • ') 
+        : 'No filters applied (All students)'
+
+      // Prepare table body
+      const tableBody = [
+        // Header row
+        [
+          { text: 'Student ID', style: 'tableHeader' },
+          { text: 'Name', style: 'tableHeader' },
+          { text: 'Course', style: 'tableHeader' },
+          { text: 'Year', style: 'tableHeader' },
+          { text: 'GPA', style: 'tableHeader' },
+          { text: 'Skills', style: 'tableHeader' },
+          { text: 'Activities', style: 'tableHeader' },
+          { text: 'Awards', style: 'tableHeader' }
+        ],
+        // Data rows
+        ...filteredStudents.map(s => [
+          s.student_id || '',
+          `${s.first_name} ${s.last_name}`,
+          s.course || '',
+          s.year_level?.toString() || '',
+          s.gpa ? s.gpa.toFixed(2) : '',
+          s.skills?.slice(0, 3).join(', ') || '',
+          s.non_academic_activities?.slice(0, 2).join(', ') || '',
+          s.academic_awards?.slice(0, 2).join(', ') || ''
+        ])
+      ]
+
+      // PDF document definition
+      const docDefinition = {
+        pageSize: 'A4',
+        pageOrientation: 'landscape',
+        pageMargins: [40, 60, 40, 60],
+        content: [
+          {
+            text: 'Student Query Results',
+            style: 'header',
+            margin: [0, 0, 0, 10]
+          },
+          {
+            text: `Generated: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`,
+            style: 'subheader',
+            margin: [0, 0, 0, 5]
+          },
+          {
+            text: `Total Results: ${filteredStudents.length} students`,
+            style: 'subheader',
+            margin: [0, 0, 0, 5]
+          },
+          {
+            text: `Filters Applied: ${filterText}`,
+            style: 'filterInfo',
+            margin: [0, 0, 0, 20]
+          },
+          {
+            table: {
+              headerRows: 1,
+              widths: ['auto', '*', 'auto', 'auto', 'auto', '*', '*', '*'],
+              body: tableBody
+            },
+            layout: {
+              fillColor: function (rowIndex) {
+                return rowIndex === 0 ? '#3b82f6' : (rowIndex % 2 === 0 ? '#f3f4f6' : null)
+              },
+              hLineWidth: function () { return 0.5 },
+              vLineWidth: function () { return 0.5 },
+              hLineColor: function () { return '#e5e7eb' },
+              vLineColor: function () { return '#e5e7eb' }
+            }
+          }
+        ],
+        styles: {
+          header: {
+            fontSize: 18,
+            bold: true,
+            color: '#1f2937'
+          },
+          subheader: {
+            fontSize: 10,
+            color: '#6b7280'
+          },
+          filterInfo: {
+            fontSize: 9,
+            color: '#3b82f6',
+            bold: true,
+            italics: true
+          },
+          tableHeader: {
+            bold: true,
+            fontSize: 9,
+            color: 'white'
+          }
+        },
+        defaultStyle: {
+          fontSize: 8
+        }
+      }
+
+      // Generate and download PDF
+      pdfMake.createPdf(docDefinition).download(`query-results-${new Date().toISOString().split('T')[0]}.pdf`)
+    } catch (error) {
+      console.error('Error generating PDF:', error)
+      alert('Failed to generate PDF. Please try again.')
+    }
   }
 
   const hasActiveCustomFilters = Object.values(customFilters).some(v => v.trim() !== '')
@@ -224,7 +360,7 @@ const ReportsQuery = () => {
             {filteredStudents.length > 0 && hasQueried && (
               <button className="rq-btn-export" onClick={exportResults}>
                 <Download size={15} />
-                Export CSV
+                Export PDF
               </button>
             )}
           </div>

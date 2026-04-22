@@ -5,9 +5,13 @@ import { getClassSchedules, createClassSchedule, deleteClassSchedule } from '../
 const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
 const EMPTY = { subject_name: '', day_of_week: 'Monday', start_time: '', end_time: '', room: '' }
 
-const DAY_COLORS = {
-  Monday:    '#dbeafe', Tuesday:  '#ede9fe', Wednesday: '#d1fae5',
-  Thursday:  '#fef3c7', Friday:   '#fee2e2', Saturday:  '#f0fdf4', Sunday: '#fce7f3',
+const DAY_COLORS_LIGHT = {
+  Monday: '#dbeafe', Tuesday: '#ede9fe', Wednesday: '#d1fae5',
+  Thursday: '#fef3c7', Friday: '#fee2e2', Saturday: '#f0fdf4', Sunday: '#fce7f3',
+}
+const DAY_COLORS_DARK = {
+  Monday: '#1e3a5f', Tuesday: '#2e1065', Wednesday: '#064e3b',
+  Thursday: '#451a03', Friday: '#450a0a', Saturday: '#052e16', Sunday: '#4a044e',
 }
 
 export default function ClassScheduleManager({ employee }) {
@@ -18,6 +22,7 @@ export default function ClassScheduleManager({ employee }) {
   const [errors, setErrors] = useState({})
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState(null)
+  const isDark = localStorage.getItem('adviser_dark_mode') === 'dark'
 
   useEffect(() => { load() }, [])
 
@@ -133,7 +138,10 @@ export default function ClassScheduleManager({ employee }) {
                 if (items.length === 0) return null
                 return (
                   <div key={day} className="emp-status-col">
-                    <div className="emp-status-col-head" style={{ background: DAY_COLORS[day] || '#f3f4f6', color: '#374151' }}>
+                    <div className="emp-status-col-head" style={{
+                      background: isDark ? (DAY_COLORS_DARK[day] || '#1e293b') : (DAY_COLORS_LIGHT[day] || '#f3f4f6'),
+                      color: isDark ? '#e2e8f0' : '#374151'
+                    }}>
                       <CalendarDays size={14} /> {day}
                       <span className="emp-status-count">{items.length}</span>
                     </div>
@@ -146,7 +154,7 @@ export default function ClassScheduleManager({ employee }) {
                           </div>
                           {s.room && <div style={{ fontSize: '0.72rem', color: 'var(--muted)' }}>📍 {s.room}</div>}
                         </div>
-                        <button className="rq-view-btn" style={{ background: '#fee2e2', color: '#dc2626', borderColor: '#fecaca', flexShrink: 0 }} onClick={() => handleDelete(s.id)}><Trash2 size={11} /></button>
+                        <button className="rq-view-btn" style={{ background: isDark ? 'rgba(239,68,68,0.15)' : '#fee2e2', color: '#f87171', borderColor: isDark ? '#7f1d1d' : '#fecaca', flexShrink: 0 }} onClick={() => handleDelete(s.id)}><Trash2 size={11} /></button>
                       </div>
                     ))}
                   </div>

@@ -19,7 +19,7 @@ export default function EditStudent() {
     setError(null)
     try {
       await updateStudent(id, payload)
-      navigate(`/students/${id}`)
+      navigate(`/admin/students/${id}`)
     } catch (e) {
       setError(e.response?.data?.error || e.message)
       setLoading(false)

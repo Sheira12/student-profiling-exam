@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import Sidebar from "./components/Sidebar";
 import TopBar from "./components/TopBar";
@@ -21,6 +21,7 @@ import SubjectManagement from "./pages/SubjectManagement";
 import AdviserManagement from "./pages/AdviserManagement";
 import ActivityLogs from "./pages/ActivityLogs";
 import Announcements from "./pages/Announcements";
+import DisciplinaryManager from "./pages/DisciplinaryManager";
 import { getAuthState, setAdmin, setEmployee, setStudent, clearAuth, ROLE_HOME } from "./hooks/useAuth";
 import "./App.css";
 
@@ -46,24 +47,37 @@ function StudentLoginGuard() {
 // ── Admin layout wrapper ──
 function AdminLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const navigate = useNavigate()
-  const { role } = getAuthState()
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const handleLogout = () => {
     clearAuth()
-    navigate('/admin', { replace: true })
-    // Force re-render by reloading — simplest approach without global state
     window.location.href = '/admin'
   }
 
   return (
     <div className="layout">
-      <Sidebar mobileOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
-      <div className="layout-body">
+      <Sidebar
+        mobileOpen={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
+        isCollapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(c => !c)}
+      />
+      <div
+        className="layout-body"
+        style={{ marginLeft: isMobile ? 0 : (sidebarCollapsed ? 80 : 280) }}
+      >
         <TopBar
           onLogout={handleLogout}
           user={{ name: 'CCS Admin', role: 'Administrator', initials: 'CA' }}
           onMenuToggle={() => setMobileMenuOpen(o => !o)}
+          isMobile={isMobile}
         />
         <main className="layout-main">
           <Routes>
@@ -77,6 +91,7 @@ function AdminLayout() {
             <Route path="reports-query" element={<ReportsQuery />} />
             <Route path="subjects"      element={<SubjectManagement />} />
             <Route path="advisers"      element={<AdviserManagement />} />
+            <Route path="disciplinary"  element={<DisciplinaryManager />} />
             <Route path="logs"          element={<ActivityLogs />} />
             <Route path="announcements" element={<Announcements />} />
             <Route path="progress"      element={<AcademicTrackerPicker />} />
@@ -156,6 +171,7 @@ export default function App() {
       <Route path="/reports-query" element={<Navigate to="/admin/reports-query" replace />} />
       <Route path="/subjects"      element={<Navigate to="/admin/subjects" replace />} />
       <Route path="/advisers"      element={<Navigate to="/admin/advisers" replace />} />
+      <Route path="/disciplinary"  element={<Navigate to="/admin/disciplinary" replace />} />
       <Route path="/logs"          element={<Navigate to="/admin/logs" replace />} />
       <Route path="/announcements" element={<Navigate to="/admin/announcements" replace />} />
       <Route path="/progress"      element={<Navigate to="/admin/progress" replace />} />
