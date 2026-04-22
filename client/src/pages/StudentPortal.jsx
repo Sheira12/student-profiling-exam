@@ -1001,21 +1001,103 @@ export default function StudentPortal({ student: initialStudent, onLogout }) {
                     <AlertTriangle size={18} />
                     <span>{student.violations.length} disciplinary record{student.violations.length > 1 ? 's' : ''} on file</span>
                   </div>
-                  <div className="sp-card">
-                    <div className="suspension-entries">
-                      {student.violations.map((v, i) => {
-                        const match = v.match(/^(.+)\s*\((\d+)\s*days?\)$/i)
-                        const reason = match ? match[1].trim() : v
-                        const days = match ? match[2] : null
-                        return (
-                          <div key={i} className="suspension-entry">
+                  <div className="sp-violations-list">
+                    {student.violations.map((v, i) => {
+                      // Parse structured violation format
+                      const parseViolation = (violationString) => {
+                        const dateMatch = violationString.match(/\[(.*?)\]/)
+                        const severityMatch = violationString.match(/\((.*?)\)/)
+                        const actionMatch = violationString.match(/Action: (.*?)(?:\s*\||$)/)
+                        const durationMatch = violationString.match(/Duration: (.*?)(?:\s*\||$)/)
+                        const statusMatch = violationString.match(/Status: (.*)$/)
+                        
+                        const parts = violationString.split(' - ')
+                        const typePart = parts[0]?.split('] ')[1]?.split(' (')[0] || ''
+                        const descPart = parts[1]?.split(' | ')[0] || violationString
+
+                        return {
+                          date: dateMatch ? dateMatch[1] : 'Not specified',
+                          type: typePart || 'Violation',
+                          severity: severityMatch ? severityMatch[1] : 'Minor',
+                          description: descPart,
+                          action: actionMatch ? actionMatch[1].trim() : null,
+                          duration: durationMatch ? durationMatch[1].trim() : null,
+                          status: statusMatch ? statusMatch[1].trim() : 'Active'
+                        }
+                      }
+
+                      const getSeverityColor = (severity) => {
+                        switch (severity) {
+                          case 'Minor': return '#10b981'
+                          case 'Moderate': return '#f59e0b'
+                          case 'Major': return '#ef4444'
+                          case 'Severe': return '#dc2626'
+                          default: return '#6b7280'
+                        }
+                      }
+
+                      const getStatusColor = (status) => {
+                        switch (status) {
+                          case 'Resolved': return { bg: '#d1fae5', color: '#10b981' }
+                          case 'Active': return { bg: '#fee2e2', color: '#dc2626' }
+                          case 'Under Review': return { bg: '#fef3c7', color: '#f59e0b' }
+                          case 'Appealed': return { bg: '#dbeafe', color: '#3b82f6' }
+                          default: return { bg: '#f3f4f6', color: '#6b7280' }
+                        }
+                      }
+
+                      const parsed = parseViolation(v)
+                      const severityColor = getSeverityColor(parsed.severity)
+                      const statusColors = getStatusColor(parsed.status)
+
+                      return (
+                        <div key={i} className="sp-violation-card">
+                          <div className="sp-violation-header">
                             <div className="sp-violation-num">#{i + 1}</div>
-                            <span className="suspension-reason">{reason}</span>
-                            {days && <span className="suspension-badge">{days} day{days > 1 ? 's' : ''} suspended</span>}
+                            <div className="sp-violation-badges">
+                              <span 
+                                className="sp-severity-badge"
+                                style={{ 
+                                  background: severityColor + '20', 
+                                  color: severityColor,
+                                  border: `1px solid ${severityColor}40`
+                                }}
+                              >
+                                {parsed.severity}
+                              </span>
+                              <span 
+                                className="sp-status-badge"
+                                style={{ 
+                                  background: statusColors.bg, 
+                                  color: statusColors.color 
+                                }}
+                              >
+                                {parsed.status}
+                              </span>
+                            </div>
                           </div>
-                        )
-                      })}
-                    </div>
+                          <div className="sp-violation-type">{parsed.type}</div>
+                          <div className="sp-violation-desc">{parsed.description}</div>
+                          <div className="sp-violation-meta">
+                            <div className="sp-violation-meta-item">
+                              <Calendar size={14} />
+                              <span>{parsed.date}</span>
+                            </div>
+                            {parsed.duration && (
+                              <div className="sp-violation-meta-item">
+                                <Clock size={14} />
+                                <span>{parsed.duration}</span>
+                              </div>
+                            )}
+                          </div>
+                          {parsed.action && (
+                            <div className="sp-violation-action">
+                              <strong>Action Taken:</strong> {parsed.action}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               ) : (

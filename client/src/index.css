@@ -1013,6 +1013,94 @@ body {
   white-space: nowrap;
 }
 
+/* New structured violation cards */
+.sp-violations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sp-violation-card {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-left: 4px solid #dc2626;
+  border-radius: 12px;
+  padding: 1rem;
+  transition: all 0.2s;
+}
+
+.sp-violation-card:hover {
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.1);
+  transform: translateY(-2px);
+}
+
+.sp-violation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.sp-violation-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.sp-severity-badge,
+.sp-status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.sp-violation-type {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #7f1d1d;
+  margin-bottom: 0.5rem;
+}
+
+.sp-violation-desc {
+  font-size: 0.875rem;
+  color: #991b1b;
+  line-height: 1.5;
+  margin-bottom: 0.75rem;
+}
+
+.sp-violation-meta {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.sp-violation-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  color: #991b1b;
+}
+
+.sp-violation-action {
+  background: rgba(220, 38, 38, 0.05);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  color: #7f1d1d;
+  margin-top: 0.5rem;
+}
+
+.sp-violation-action strong {
+  font-weight: 600;
+  margin-right: 0.25rem;
+}
+
 /* Suspension form */
 .suspension-list {
   display: flex;
@@ -11661,6 +11749,26 @@ Reports Dashboard Styles - Working Version */
   .sp-schedule-grid { grid-template-columns: 1fr; }
   .sp-violations-grid { grid-template-columns: 1fr; }
   
+  /* Violation cards responsive */
+  .sp-violation-card {
+    padding: 0.75rem;
+  }
+  
+  .sp-violation-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .sp-violation-badges {
+    width: 100%;
+  }
+  
+  .sp-violation-meta {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
   /* Smaller sidebar on very small screens */
   .sp-sidebar { width: 260px; }
   
@@ -12819,6 +12927,34 @@ Reports Dashboard Styles - Working Version */
 /* Dark mode violations */
 .sp-root.dark .suspension-entry { background: #1e293b; border-color: #334155; }
 .sp-root.dark .suspension-reason { color: #f1f5f9; }
+
+/* Dark mode new violation cards */
+.sp-root.dark .sp-violation-card {
+  background: #1e293b;
+  border-color: #334155;
+  border-left-color: #dc2626;
+}
+
+.sp-root.dark .sp-violation-card:hover {
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+}
+
+.sp-root.dark .sp-violation-type {
+  color: #f1f5f9;
+}
+
+.sp-root.dark .sp-violation-desc {
+  color: #cbd5e1;
+}
+
+.sp-root.dark .sp-violation-meta-item {
+  color: #94a3b8;
+}
+
+.sp-root.dark .sp-violation-action {
+  background: rgba(220, 38, 38, 0.1);
+  color: #cbd5e1;
+}
 
 
 
