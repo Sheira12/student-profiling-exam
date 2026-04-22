@@ -4,7 +4,7 @@ import {
   LogOut, ChevronDown, Home, TrendingUp, CheckCircle, Clock,
   XCircle, Star, Activity, Shield, Mail, Phone, MapPin,
   Calendar, Hash, ChevronRight, BarChart2, Bell, MessageSquare,
-  Send, Briefcase, RefreshCw, Megaphone, Moon, Sun, CalendarDays, ArrowLeft, X
+  Send, Briefcase, RefreshCw, Megaphone, Moon, Sun, CalendarDays, ArrowLeft, X, FileText
 } from 'lucide-react'
 import { CURRICULUM } from '../data/curriculum'
 import {
@@ -997,11 +997,43 @@ export default function StudentPortal({ student: initialStudent, onLogout }) {
 
               {student.violations?.length > 0 ? (
                 <div className="sp-violations-wrap">
-                  <div className="sp-violations-alert">
-                    <AlertTriangle size={18} />
-                    <span>{student.violations.length} disciplinary record{student.violations.length > 1 ? 's' : ''} on file</span>
+                  {/* Summary Stats */}
+                  <div className="sp-violations-summary">
+                    <div className="sp-violations-stat">
+                      <div className="sp-violations-stat-icon" style={{ background: '#fee2e2', color: '#dc2626' }}>
+                        <AlertTriangle size={20} />
+                      </div>
+                      <div className="sp-violations-stat-content">
+                        <div className="sp-violations-stat-value">{student.violations.length}</div>
+                        <div className="sp-violations-stat-label">Total Records</div>
+                      </div>
+                    </div>
+                    <div className="sp-violations-stat">
+                      <div className="sp-violations-stat-icon" style={{ background: '#d1fae5', color: '#10b981' }}>
+                        <CheckCircle size={20} />
+                      </div>
+                      <div className="sp-violations-stat-content">
+                        <div className="sp-violations-stat-value">
+                          {student.violations.filter(v => v.includes('Status: Resolved')).length}
+                        </div>
+                        <div className="sp-violations-stat-label">Resolved</div>
+                      </div>
+                    </div>
+                    <div className="sp-violations-stat">
+                      <div className="sp-violations-stat-icon" style={{ background: '#fef3c7', color: '#f59e0b' }}>
+                        <Clock size={20} />
+                      </div>
+                      <div className="sp-violations-stat-content">
+                        <div className="sp-violations-stat-value">
+                          {student.violations.filter(v => v.includes('Status: Active') || v.includes('Status: Under Review')).length}
+                        </div>
+                        <div className="sp-violations-stat-label">Pending</div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="sp-violations-list">
+
+                  {/* Timeline View */}
+                  <div className="sp-violations-timeline">
                     {student.violations.map((v, i) => {
                       // Parse structured violation format
                       const parseViolation = (violationString) => {
@@ -1026,87 +1058,148 @@ export default function StudentPortal({ student: initialStudent, onLogout }) {
                         }
                       }
 
-                      const getSeverityColor = (severity) => {
+                      const getSeverityConfig = (severity) => {
                         switch (severity) {
-                          case 'Minor': return '#10b981'
-                          case 'Moderate': return '#f59e0b'
-                          case 'Major': return '#ef4444'
-                          case 'Severe': return '#dc2626'
-                          default: return '#6b7280'
+                          case 'Minor': return { color: '#10b981', bg: '#d1fae5', icon: '●', label: 'Minor Issue' }
+                          case 'Moderate': return { color: '#f59e0b', bg: '#fef3c7', icon: '◆', label: 'Moderate Concern' }
+                          case 'Major': return { color: '#ef4444', bg: '#fee2e2', icon: '■', label: 'Major Violation' }
+                          case 'Severe': return { color: '#dc2626', bg: '#fecaca', icon: '▲', label: 'Severe Offense' }
+                          default: return { color: '#6b7280', bg: '#f3f4f6', icon: '○', label: 'Violation' }
                         }
                       }
 
-                      const getStatusColor = (status) => {
+                      const getStatusConfig = (status) => {
                         switch (status) {
-                          case 'Resolved': return { bg: '#d1fae5', color: '#10b981' }
-                          case 'Active': return { bg: '#fee2e2', color: '#dc2626' }
-                          case 'Under Review': return { bg: '#fef3c7', color: '#f59e0b' }
-                          case 'Appealed': return { bg: '#dbeafe', color: '#3b82f6' }
-                          default: return { bg: '#f3f4f6', color: '#6b7280' }
+                          case 'Resolved': return { bg: '#d1fae5', color: '#10b981', icon: CheckCircle, label: 'Case Closed' }
+                          case 'Active': return { bg: '#fee2e2', color: '#dc2626', icon: AlertTriangle, label: 'Currently Active' }
+                          case 'Under Review': return { bg: '#fef3c7', color: '#f59e0b', icon: Clock, label: 'Being Reviewed' }
+                          case 'Appealed': return { bg: '#dbeafe', color: '#3b82f6', icon: Shield, label: 'Under Appeal' }
+                          default: return { bg: '#f3f4f6', color: '#6b7280', icon: AlertTriangle, label: 'Unknown' }
                         }
                       }
 
                       const parsed = parseViolation(v)
-                      const severityColor = getSeverityColor(parsed.severity)
-                      const statusColors = getStatusColor(parsed.status)
+                      const severityConfig = getSeverityConfig(parsed.severity)
+                      const statusConfig = getStatusConfig(parsed.status)
+                      const StatusIcon = statusConfig.icon
 
                       return (
-                        <div key={i} className="sp-violation-card">
-                          <div className="sp-violation-header">
-                            <div className="sp-violation-num">#{i + 1}</div>
-                            <div className="sp-violation-badges">
-                              <span 
-                                className="sp-severity-badge"
-                                style={{ 
-                                  background: severityColor + '20', 
-                                  color: severityColor,
-                                  border: `1px solid ${severityColor}40`
-                                }}
-                              >
-                                {parsed.severity}
-                              </span>
-                              <span 
-                                className="sp-status-badge"
-                                style={{ 
-                                  background: statusColors.bg, 
-                                  color: statusColors.color 
-                                }}
-                              >
-                                {parsed.status}
-                              </span>
-                            </div>
+                        <div key={i} className="sp-violation-timeline-item">
+                          {/* Timeline connector */}
+                          <div className="sp-violation-timeline-line" style={{ background: severityConfig.color }} />
+                          <div 
+                            className="sp-violation-timeline-dot" 
+                            style={{ 
+                              background: severityConfig.color,
+                              boxShadow: `0 0 0 4px ${severityConfig.bg}`
+                            }}
+                          >
+                            <span style={{ fontSize: '10px', color: 'white' }}>{severityConfig.icon}</span>
                           </div>
-                          <div className="sp-violation-type">{parsed.type}</div>
-                          <div className="sp-violation-desc">{parsed.description}</div>
-                          <div className="sp-violation-meta">
-                            <div className="sp-violation-meta-item">
-                              <Calendar size={14} />
-                              <span>{parsed.date}</span>
+
+                          {/* Card Content */}
+                          <div className="sp-violation-enhanced-card">
+                            {/* Header with date and status */}
+                            <div className="sp-violation-card-header">
+                              <div className="sp-violation-date-badge">
+                                <Calendar size={14} />
+                                <span>{parsed.date}</span>
+                              </div>
+                              <div 
+                                className="sp-violation-status-pill"
+                                style={{ 
+                                  background: statusConfig.bg, 
+                                  color: statusConfig.color 
+                                }}
+                              >
+                                <StatusIcon size={14} />
+                                <span>{parsed.status}</span>
+                              </div>
                             </div>
+
+                            {/* Severity and Type */}
+                            <div className="sp-violation-title-row">
+                              <div 
+                                className="sp-violation-severity-tag"
+                                style={{ 
+                                  background: severityConfig.bg,
+                                  color: severityConfig.color,
+                                  borderLeft: `4px solid ${severityConfig.color}`
+                                }}
+                              >
+                                <span className="sp-violation-severity-icon">{severityConfig.icon}</span>
+                                <div>
+                                  <div className="sp-violation-severity-level">{parsed.severity}</div>
+                                  <div className="sp-violation-severity-desc">{severityConfig.label}</div>
+                                </div>
+                              </div>
+                              <div className="sp-violation-type-badge">{parsed.type}</div>
+                            </div>
+
+                            {/* Description */}
+                            <div className="sp-violation-description">
+                              <div className="sp-violation-desc-label">
+                                <FileText size={14} />
+                                <span>Incident Details</span>
+                              </div>
+                              <p>{parsed.description}</p>
+                            </div>
+
+                            {/* Duration if exists */}
                             {parsed.duration && (
-                              <div className="sp-violation-meta-item">
-                                <Clock size={14} />
-                                <span>{parsed.duration}</span>
+                              <div className="sp-violation-duration-box">
+                                <Clock size={16} />
+                                <div>
+                                  <div className="sp-violation-duration-label">Duration / Period</div>
+                                  <div className="sp-violation-duration-value">{parsed.duration}</div>
+                                </div>
                               </div>
                             )}
-                          </div>
-                          {parsed.action && (
-                            <div className="sp-violation-action">
-                              <strong>Action Taken:</strong> {parsed.action}
+
+                            {/* Action Taken */}
+                            {parsed.action && (
+                              <div className="sp-violation-action-box">
+                                <div className="sp-violation-action-header">
+                                  <Shield size={16} />
+                                  <span>Disciplinary Action</span>
+                                </div>
+                                <div className="sp-violation-action-content">{parsed.action}</div>
+                              </div>
+                            )}
+
+                            {/* Footer with record number */}
+                            <div className="sp-violation-card-footer">
+                              <div className="sp-violation-record-num">
+                                <Hash size={12} />
+                                Record {i + 1} of {student.violations.length}
+                              </div>
+                              <div className="sp-violation-status-label">{statusConfig.label}</div>
                             </div>
-                          )}
+                          </div>
                         </div>
                       )
                     })}
                   </div>
                 </div>
               ) : (
-                <div className="sp-clean-record">
-                  <div className="sp-clean-icon">
-                    <CheckCircle size={40} />
+                <div className="sp-clean-record-enhanced">
+                  <div className="sp-clean-record-bg">
+                    <div className="sp-clean-record-icon-wrapper">
+                      <CheckCircle size={64} strokeWidth={1.5} />
+                    </div>
                   </div>
-                  <h3>Clean Record</h3>
-                  <p>You have no disciplinary records on file. Keep it up!</p>
+                  <h3>Excellent Standing</h3>
+                  <p>You have maintained a clean disciplinary record. Your commitment to following institutional policies is commendable.</p>
+                  <div className="sp-clean-record-stats">
+                    <div className="sp-clean-stat">
+                      <Shield size={20} />
+                      <span>Zero Violations</span>
+                    </div>
+                    <div className="sp-clean-stat">
+                      <Star size={20} />
+                      <span>Good Conduct</span>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
