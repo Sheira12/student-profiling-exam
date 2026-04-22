@@ -1,8 +1,8 @@
-import { NavLink, useNavigate } from 'react-router-dom'
-import { useState, useEffect } from 'react'
+import { NavLink } from 'react-router-dom'
+import { useEffect } from 'react'
 import {
   LayoutDashboard, Users, UserPlus, BookOpen, BarChart2,
-  Filter, Briefcase, ClipboardList, GraduationCap, Megaphone, Shield, X, ChevronLeft, Menu
+  Filter, Briefcase, ClipboardList, GraduationCap, Megaphone, Shield, X
 } from 'lucide-react'
 
 const NAV = [
@@ -371,6 +371,88 @@ export default function Sidebar({ mobileOpen, onClose, isCollapsed, onToggleColl
 
           .collapse-toggle-btn {
             display: none;
+          }
+
+          .sidebar-header {
+            padding: 20px 16px;
+          }
+
+          .logo-title {
+            font-size: 15px;
+          }
+
+          .logo-subtitle {
+            font-size: 10px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .modern-sidebar {
+            width: 260px !important;
+          }
+
+          .sidebar-header {
+            padding: 16px 12px;
+            min-height: 70px;
+          }
+
+          .logo-circle {
+            width: 44px;
+            height: 44px;
+          }
+
+          .hamburger-icon {
+            width: 18px;
+            gap: 3px;
+          }
+
+          .hamburger-icon span {
+            height: 2px;
+          }
+
+          .logo-title {
+            font-size: 14px;
+          }
+
+          .logo-subtitle {
+            font-size: 9px;
+          }
+
+          .sidebar-navigation {
+            padding: 12px 8px;
+          }
+
+          .nav-item {
+            padding: 10px 12px;
+            font-size: 13px;
+          }
+
+          .nav-icon {
+            width: 18px;
+            height: 18px;
+          }
+        }
+
+        @media (min-width: 769px) and (max-width: 1024px) {
+          .modern-sidebar[style*="280px"] {
+            width: 240px !important;
+          }
+
+          .sidebar-header {
+            padding: 20px 16px;
+          }
+
+          .logo-title {
+            font-size: 14px;
+          }
+
+          .logo-subtitle {
+            font-size: 10px;
+          }
+
+          .nav-item {
+            padding: 10px 14px;
+            font-size: 13px;
           }
         }
       `}</style>

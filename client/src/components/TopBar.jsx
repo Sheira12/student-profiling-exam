@@ -25,6 +25,13 @@ export default function TopBar({ onLogout, user, onMenuToggle, isMobile }) {
 
   return (
     <header className="topbar">
+      {/* Mobile menu button */}
+      {isMobile && (
+        <button className="mobile-menu-btn" onClick={onMenuToggle} title="Open menu">
+          <Menu size={20} strokeWidth={2} />
+        </button>
+      )}
+
       <div className="topbar-title">Student Information System</div>
 
       <div className="topbar-divider" />

@@ -394,6 +394,35 @@ body {
   white-space: nowrap;
 }
 
+.mobile-menu-btn {
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 8px;
+  color: white;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
+}
+
+.mobile-menu-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
+}
+
+.mobile-menu-btn:active {
+  transform: scale(0.95);
+}
+
+body.dark-mode .mobile-menu-btn {
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.4);
+}
+
 .topbar-search {
   flex: 1;
   max-width: 340px;
@@ -1815,6 +1844,10 @@ legend {
 }
 
 @media (max-width: 768px) {
+  .layout-body {
+    margin-left: 0 !important;
+  }
+
   .layout-main {
     padding: 1rem;
   }
@@ -1825,6 +1858,10 @@ legend {
 
   .si-stats-panel {
     width: 100%;
+  }
+
+  .topbar {
+    padding: 0 1rem;
   }
 
   .topbar-title {
@@ -6066,6 +6103,15 @@ body.dark-mode option {
    MOBILE TOPBAR & DASHBOARD FIXES
 ======================================== */
 @media (max-width: 768px) {
+
+  /* Layout adjustments */
+  .layout-body {
+    margin-left: 0 !important;
+  }
+
+  .layout-main {
+    padding: 0.875rem;
+  }
 
   /* Topbar — proper layout on mobile */
   .topbar {
