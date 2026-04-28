@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { getStudents } from '../api/supabase-students'
+import { getStudents, getStudentCount } from '../api/supabase-students'
 import { BarChart2, Users, Award, TrendingUp, AlertTriangle, PieChart, Activity, BookOpen } from 'lucide-react'
 
 const QueryStudents = () => {
   const [students, setStudents] = useState([])
+  const [totalCount, setTotalCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -14,8 +15,9 @@ const QueryStudents = () => {
   const loadStudents = async () => {
     try {
       setLoading(true)
-      const response = await getStudents()
+      const [response, count] = await Promise.all([getStudents(), getStudentCount()])
       setStudents(response.data || [])
+      setTotalCount(count)
     } catch (err) {
       setError('Failed to load student data: ' + err.message)
     } finally {
@@ -25,7 +27,7 @@ const QueryStudents = () => {
 
   // Calculate analytics
   const analytics = {
-    total: students.length,
+    total: totalCount,
     
     // Course distribution
     courseStats: students.reduce((acc, student) => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { getStudents } from '../api/supabase-students'
+import { getStudents, getStudentCount } from '../api/supabase-students'
 import {
   Search, Filter, Users, Award, Activity, Building, AlertTriangle,
   Play, RotateCcw, TrendingUp, Eye, Download, Zap, BookOpen,
@@ -8,6 +8,7 @@ import {
 
 const ReportsQuery = () => {
   const [students, setStudents] = useState([])
+  const [totalCount, setTotalCount] = useState(0)
   const [filteredStudents, setFilteredStudents] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -37,9 +38,9 @@ const ReportsQuery = () => {
   const loadAllStudents = async () => {
     try {
       setLoading(true); setError(null)
-      const response = await getStudents()
+      const [response, count] = await Promise.all([getStudents(), getStudentCount()])
       const data = response.data || []
-      setStudents(data); setFilteredStudents(data)
+      setStudents(data); setFilteredStudents(data); setTotalCount(count)
     } catch (err) {
       setError('Failed to load students: ' + err.message)
     } finally { setLoading(false) }
@@ -257,8 +258,8 @@ const ReportsQuery = () => {
         <div className="rq-header-stats">
           {[
             { val: filteredStudents.length, lbl: 'Results' },
-            { val: students.length,         lbl: 'Total' },
-            { val: students.length > 0 ? ((filteredStudents.length / students.length) * 100).toFixed(0) + '%' : '0%', lbl: 'Match' },
+            { val: totalCount,              lbl: 'Total' },
+            { val: totalCount > 0 ? ((filteredStudents.length / totalCount) * 100).toFixed(0) + '%' : '0%', lbl: 'Match' },
           ].map(({ val, lbl }) => (
             <div key={lbl} className="rq-stat-pill">
               <span className="rq-stat-val">{val}</span>
@@ -374,7 +375,7 @@ const ReportsQuery = () => {
             <Eye size={16} className="rq-section-icon" />
             <span>Results</span>
             <div className="rq-results-badges">
-              <span className="rq-badge-count">{filteredStudents.length} of {students.length} students</span>
+              <span className="rq-badge-count">{filteredStudents.length} of {totalCount} students</span>
               {activePreset && (
                 <span className="rq-badge-filter">
                   {presetQueries.find(p => p.id === activePreset)?.label}
