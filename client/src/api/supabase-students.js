@@ -1,5 +1,13 @@
 import { supabase } from '../lib/supabase'
 
+export const getStudentCount = async () => {
+  const { count, error } = await supabase
+    .from('students')
+    .select('*', { count: 'exact', head: true })
+  if (error) throw error
+  return count
+}
+
 export const getStudents = async (params = {}) => {
   let query = supabase.from('students').select('*')
   

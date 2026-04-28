@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { getStudents } from '../api/supabase-students'
+import { getStudents, getStudentCount } from '../api/supabase-students'
 import {
   GraduationCap, UserCheck, UserX, AlertTriangle,
   UserPlus, Users, Search, ClipboardList, ArrowRight,
@@ -9,18 +9,23 @@ import {
 
 export default function Dashboard() {
   const [students, setStudents] = useState([])
+  const [totalCount, setTotalCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
   useEffect(() => {
-    getStudents().then(({ data }) => {
+    Promise.all([
+      getStudents().then(({ data }) => data),
+      getStudentCount()
+    ]).then(([data, count]) => {
       setStudents(data)
+      setTotalCount(count)
       setLoading(false)
     }).catch(() => setLoading(false))
   }, [])
 
   const stats = {
-    total: students.length,
+    total: totalCount,
     enrolled: students.filter(s => s.year_level).length,
     notEnrolled: students.filter(s => !s.year_level).length,
     withViolations: students.filter(s => s.violations?.length > 0).length,
